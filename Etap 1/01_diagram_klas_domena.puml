@@ -1,0 +1,93 @@
+@startuml diagram_klas_domena
+title Investe — Diagram klas (model domenowy)
+
+skinparam classAttributeIconSize 0
+
+package "Tożsamość" {
+    class ApplicationUser {
+        +Id : string
+        +Email : string
+        +UserName : string
+        +PasswordHash : string
+        +CreatedAt : DateTime
+    }
+}
+
+package "Portfel" {
+    class Wallet {
+        +Id : int
+        +Name : string
+        +Description : string
+        +CreatedAt : DateTime
+        +UserId : string
+    }
+
+    class Holding {
+        +Id : int
+        +CoinId : string
+        +CoinSymbol : string
+        +CoinName : string
+        +Quantity : decimal
+        +AverageBuyPrice : decimal
+        +WalletId : int
+    }
+}
+
+package "Transakcje" {
+    class Transaction {
+        +Id : int
+        +CoinId : string
+        +CoinSymbol : string
+        +Type : TransactionType
+        +Quantity : decimal
+        +PriceAtTime : decimal
+        +TotalValue : decimal
+        +ExecutedAt : DateTime
+        +WalletId : int
+    }
+
+    enum TransactionType {
+        Buy
+        Sell
+    }
+}
+
+package "Ceny" {
+    class CoinPriceCache {
+        +Id : int
+        +CoinId : string
+        +CoinSymbol : string
+        +CurrentPrice : decimal
+        +PriceChange24h : decimal
+        +PriceChangePercent24h : decimal
+        +LastUpdated : DateTime
+    }
+}
+
+package "Alerty" {
+    class PriceAlert {
+        +Id : int
+        +CoinId : string
+        +CoinSymbol : string
+        +TargetPrice : decimal
+        +Direction : AlertDirection
+        +IsTriggered : bool
+        +TriggeredAt : DateTime?
+        +CreatedAt : DateTime
+        +UserId : string
+    }
+
+    enum AlertDirection {
+        Above
+        Below
+    }
+}
+
+ApplicationUser "1" o-- "0..*" Wallet : posiada
+ApplicationUser "1" o-- "0..*" PriceAlert : ustawia
+Wallet "1" *-- "0..*" Holding : zawiera
+Wallet "1" *-- "0..*" Transaction : rejestruje
+Transaction --> TransactionType
+PriceAlert --> AlertDirection
+
+@enduml
