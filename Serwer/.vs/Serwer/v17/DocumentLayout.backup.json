@@ -1,12 +1,117 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Kacper\\Desktop\\Serwer\\",
-  "Documents": [],
+  "WorkspaceRootPath": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E906846A-8D30-4A13-8C8D-4A55064BA81A}|Server.Tests\\Server.Tests.csproj|d:\\novomat\\tracker_inwestycyjny-\\serwer\\server.tests\\server.tests.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{E906846A-8D30-4A13-8C8D-4A55064BA81A}|Server.Tests\\Server.Tests.csproj|solutionrelative:server.tests\\server.tests.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E906846A-8D30-4A13-8C8D-4A55064BA81A}|Server.Tests\\Server.Tests.csproj|d:\\novomat\\tracker_inwestycyjny-\\serwer\\server.tests\\portfolioservicetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E906846A-8D30-4A13-8C8D-4A55064BA81A}|Server.Tests\\Server.Tests.csproj|solutionrelative:server.tests\\portfolioservicetests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5D71C9BD-76D7-4469-897E-807B01F70837}|Serwer\\Serwer.csproj|d:\\novomat\\tracker_inwestycyjny-\\serwer\\serwer\\serwer.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{5D71C9BD-76D7-4469-897E-807B01F70837}|Serwer\\Serwer.csproj|solutionrelative:serwer\\serwer.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5D71C9BD-76D7-4469-897E-807B01F70837}|Serwer\\Serwer.csproj|d:\\novomat\\tracker_inwestycyjny-\\serwer\\serwer\\serwer.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
+      "RelativeMoniker": "D:0:0:{5D71C9BD-76D7-4469-897E-807B01F70837}|Serwer\\Serwer.csproj|solutionrelative:serwer\\serwer.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5D71C9BD-76D7-4469-897E-807B01F70837}|Serwer\\Serwer.csproj|d:\\novomat\\tracker_inwestycyjny-\\serwer\\serwer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5D71C9BD-76D7-4469-897E-807B01F70837}|Serwer\\Serwer.csproj|solutionrelative:serwer\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PortfolioServiceTests.cs",
+              "DocumentMoniker": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Server.Tests\\PortfolioServiceTests.cs",
+              "RelativeDocumentMoniker": "Server.Tests\\PortfolioServiceTests.cs",
+              "ToolTip": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Server.Tests\\PortfolioServiceTests.cs",
+              "RelativeToolTip": "Server.Tests\\PortfolioServiceTests.cs",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAYwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-28T22:05:41.14Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3fd5e0cc-709a-4f8c-94c3-7f0f8dff5bb2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Server.Tests.csproj",
+              "DocumentMoniker": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Server.Tests\\Server.Tests.csproj",
+              "RelativeDocumentMoniker": "Server.Tests\\Server.Tests.csproj",
+              "ToolTip": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Server.Tests\\Server.Tests.csproj",
+              "RelativeToolTip": "Server.Tests\\Server.Tests.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-04-28T22:02:54.411Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Serwer.http",
+              "DocumentMoniker": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Serwer\\Serwer.http",
+              "RelativeDocumentMoniker": "Serwer\\Serwer.http",
+              "ToolTip": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Serwer\\Serwer.http",
+              "RelativeToolTip": "Serwer\\Serwer.http",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
+              "WhenOpened": "2026-04-28T21:28:49.279Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Serwer\\Program.cs",
+              "RelativeDocumentMoniker": "Serwer\\Program.cs",
+              "ToolTip": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Serwer\\Program.cs",
+              "RelativeToolTip": "Serwer\\Program.cs",
+              "ViewState": "AgIAACIAAAAAAAAAAAAUwDQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-28T21:26:00.42Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Serwer.csproj",
+              "DocumentMoniker": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Serwer\\Serwer.csproj",
+              "RelativeDocumentMoniker": "Serwer\\Serwer.csproj",
+              "ToolTip": "D:\\novomat\\Tracker_Inwestycyjny-\\Serwer\\Serwer\\Serwer.csproj",
+              "RelativeToolTip": "Serwer\\Serwer.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-04-28T21:22:55.465Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 126,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
