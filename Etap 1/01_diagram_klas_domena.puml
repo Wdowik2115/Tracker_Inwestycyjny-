@@ -2,6 +2,14 @@
 title Investe — Diagram klas (model domenowy)
 
 skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #1e3a5f
+skinparam classHeaderFontColor #ffffff
+skinparam classBorderColor #2e6da4
+skinparam ArrowColor #2e6da4
+skinparam BackgroundColor #f9f9f9
+skinparam packageBackgroundColor #eaf2fb
+skinparam packageBorderColor #2e6da4
 
 package "Tożsamość" {
     class ApplicationUser {
@@ -10,6 +18,9 @@ package "Tożsamość" {
         +UserName : string
         +PasswordHash : string
         +CreatedAt : DateTime
+        --
+        +Wallets : ICollection<Wallet>
+        +PriceAlerts : ICollection<PriceAlert>
     }
 }
 
@@ -19,7 +30,11 @@ package "Portfel" {
         +Name : string
         +Description : string
         +CreatedAt : DateTime
+        --
         +UserId : string
+        +User : ApplicationUser
+        +Holdings : ICollection<Holding>
+        +Transactions : ICollection<Transaction>
     }
 
     class Holding {
@@ -29,7 +44,9 @@ package "Portfel" {
         +CoinName : string
         +Quantity : decimal
         +AverageBuyPrice : decimal
+        --
         +WalletId : int
+        +Wallet : Wallet
     }
 }
 
@@ -43,7 +60,10 @@ package "Transakcje" {
         +PriceAtTime : decimal
         +TotalValue : decimal
         +ExecutedAt : DateTime
+        +Notes : string
+        --
         +WalletId : int
+        +Wallet : Wallet
     }
 
     enum TransactionType {
@@ -57,9 +77,11 @@ package "Ceny" {
         +Id : int
         +CoinId : string
         +CoinSymbol : string
+        +CoinName : string
         +CurrentPrice : decimal
         +PriceChange24h : decimal
         +PriceChangePercent24h : decimal
+        +MarketCap : decimal
         +LastUpdated : DateTime
     }
 }
@@ -74,7 +96,9 @@ package "Alerty" {
         +IsTriggered : bool
         +TriggeredAt : DateTime?
         +CreatedAt : DateTime
+        --
         +UserId : string
+        +User : ApplicationUser
     }
 
     enum AlertDirection {
@@ -83,11 +107,14 @@ package "Alerty" {
     }
 }
 
+' Relacje
 ApplicationUser "1" o-- "0..*" Wallet : posiada
 ApplicationUser "1" o-- "0..*" PriceAlert : ustawia
+
 Wallet "1" *-- "0..*" Holding : zawiera
 Wallet "1" *-- "0..*" Transaction : rejestruje
-Transaction --> TransactionType
-PriceAlert --> AlertDirection
+
+Transaction --> TransactionType : typ
+PriceAlert --> AlertDirection : kierunek
 
 @enduml
