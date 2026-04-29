@@ -11,7 +11,7 @@ obj/
 .vs/
 .vscode/
 # Keep .vscode/settings.json if you want shared settings, but ignore the rest:
-# .vscode/*
+.vscode/*
 # !.vscode/settings.json
 # !.vscode/tasks.json
 # !.vscode/launch.json
