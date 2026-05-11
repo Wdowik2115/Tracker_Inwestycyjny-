@@ -1,0 +1,42 @@
+using Investe.Application.DTOs;
+using Investe.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Serwer.Extensions;
+
+namespace Serwer.Controllers
+{
+    [ApiController]
+    [Route("api/wallets")]
+    [Authorize]
+    public class WalletController : ControllerBase
+    {
+        private readonly IWalletService _walletService;
+
+        public WalletController(IWalletService walletService)
+        {
+            _walletService = walletService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetWallets()
+        {
+            var wallets = await _walletService.GetUserWalletsAsync(User.GetUserId());
+            return Ok(wallets);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateWallet([FromBody] CreateWalletDto dto)
+        {
+            var wallet = await _walletService.CreateWalletAsync(User.GetUserId(), dto);
+            return CreatedAtAction(nameof(GetWallets), new { }, wallet);
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> DeleteWallet(Guid id)
+        {
+            await _walletService.DeleteWalletAsync(User.GetUserId(), id);
+            return NoContent();
+        }
+    }
+}
