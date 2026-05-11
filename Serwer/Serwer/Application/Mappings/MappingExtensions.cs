@@ -15,17 +15,36 @@ namespace Investe.Application.Mappings
             };
         }
 
-        public static AssetResponseDto ToDto(this Asset asset, decimal currentPrice)
+        public static TransactionDto ToDto(this Transaction t)
         {
-            return new AssetResponseDto
+            return new TransactionDto
             {
-                Id = asset.Id,
-                CoinId = asset.CoinId,
-                Symbol = asset.Symbol,
-                Name = asset.Name,
-                Quantity = asset.Quantity,
-                AverageBuyPrice = asset.AverageBuyPrice,
-                CurrentPrice = currentPrice
+                Id = t.Id,
+                WalletId = t.WalletId,
+                CoinId = t.CoinId,
+                Symbol = t.Symbol,
+                Type = t.Type.ToString(),
+                Quantity = t.Quantity,
+                PriceAtTime = t.PriceAtTime,
+                TotalValue = t.TotalValue,
+                CostBasisPerUnit = t.CostBasisPerUnit,
+                CostBasisSource = t.CostBasisSource,
+                ExecutedAt = t.ExecutedAt,
+                Notes = t.Notes
+            };
+        }
+
+        public static AlertDto ToDto(this PriceAlert a)
+        {
+            return new AlertDto
+            {
+                Id = a.Id,
+                Symbol = a.Symbol,
+                TargetPrice = a.TargetPrice,
+                Direction = a.Direction,
+                IsTriggered = a.IsTriggered,
+                TriggeredAt = a.TriggeredAt,
+                CreatedAt = a.CreatedAt
             };
         }
     }
