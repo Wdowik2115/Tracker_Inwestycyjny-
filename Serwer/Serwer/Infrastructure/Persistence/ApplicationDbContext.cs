@@ -9,6 +9,7 @@ namespace Investe.Infrastructure.Persistence
         {
         }
 
+        public DbSet<User> Users { get; set; } = null!;
         public DbSet<Wallet> Wallets { get; set; } = null!;
         public DbSet<Asset> Assets { get; set; } = null!;
         public DbSet<Transaction> Transactions { get; set; } = null!;
@@ -18,39 +19,64 @@ namespace Investe.Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Wallet>()
-                .HasMany(w => w.Assets)
-                .WithOne(a => a.Wallet)
-                .HasForeignKey(a => a.WalletId);
+            // User
+            modelBuilder.Entity<User>(e =>
+            {
+                e.HasKey(u => u.Id);
+                e.Property(u => u.Id).ValueGeneratedOnAdd();
+                e.HasIndex(u => u.Email).IsUnique();
+            });
 
-            modelBuilder.Entity<Wallet>()
-                .HasMany(w => w.Transactions)
-                .WithOne(t => t.Wallet)
-                .HasForeignKey(t => t.WalletId);
+            // Wallet
+            modelBuilder.Entity<Wallet>(e =>
+            {
+                e.HasKey(w => w.Id);
+                e.Property(w => w.Id).ValueGeneratedOnAdd();
+                e.HasOne(w => w.User)
+                    .WithMany(u => u.Wallets)
+                    .HasForeignKey(w => w.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(w => w.Assets)
+                    .WithOne(a => a.Wallet)
+                    .HasForeignKey(a => a.WalletId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(w => w.Transactions)
+                    .WithOne(t => t.Wallet)
+                    .HasForeignKey(t => t.WalletId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
-            modelBuilder.Entity<Asset>()
-                .Property(a => a.Quantity)
-                .HasPrecision(18, 8);
+            // Asset
+            modelBuilder.Entity<Asset>(e =>
+            {
+                e.HasKey(a => a.Id);
+                e.Property(a => a.Id).ValueGeneratedOnAdd();
+                e.Property(a => a.Quantity).HasPrecision(18, 8);
+                e.Property(a => a.AverageBuyPrice).HasPrecision(18, 8);
+            });
 
-            modelBuilder.Entity<Asset>()
-                .Property(a => a.AverageBuyPrice)
-                .HasPrecision(18, 8);
+            // Transaction
+            modelBuilder.Entity<Transaction>(e =>
+            {
+                e.HasKey(t => t.Id);
+                e.Property(t => t.Id).ValueGeneratedOnAdd();
+                e.Property(t => t.Quantity).HasPrecision(18, 8);
+                e.Property(t => t.PriceAtTime).HasPrecision(18, 8);
+                e.Property(t => t.TotalValue).HasPrecision(18, 8);
+                e.Property(t => t.CostBasisPerUnit).HasPrecision(18, 8);
+            });
 
-            modelBuilder.Entity<Transaction>()
-                .Property(t => t.Quantity)
-                .HasPrecision(18, 8);
-
-            modelBuilder.Entity<Transaction>()
-                .Property(t => t.PriceAtTime)
-                .HasPrecision(18, 8);
-
-            modelBuilder.Entity<Transaction>()
-                .Property(t => t.TotalValue)
-                .HasPrecision(18, 8);
-
-            modelBuilder.Entity<PriceAlert>()
-                .Property(p => p.TargetPrice)
-                .HasPrecision(18, 8);
+            // PriceAlert
+            modelBuilder.Entity<PriceAlert>(e =>
+            {
+                e.HasKey(p => p.Id);
+                e.Property(p => p.Id).ValueGeneratedOnAdd();
+                e.Property(p => p.TargetPrice).HasPrecision(18, 8);
+                e.HasOne(p => p.User)
+                    .WithMany(u => u.PriceAlerts)
+                    .HasForeignKey(p => p.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Investe.Infrastructure.Persistence.Repositories.Common
             _dbContext = dbContext;
         }
 
-        public virtual async Task<T?> GetByIdAsync(int id)
+        public virtual async Task<T?> GetByIdAsync(Guid id)
         {
             return await _dbContext.Set<T>().FindAsync(id);
         }

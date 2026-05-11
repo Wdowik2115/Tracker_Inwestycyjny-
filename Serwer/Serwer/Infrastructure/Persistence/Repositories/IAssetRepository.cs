@@ -5,6 +5,6 @@ namespace Investe.Infrastructure.Persistence.Repositories
 {
     public interface IAssetRepository : IBaseRepository<Asset>
     {
-        Task<IEnumerable<Asset>> GetAssetsByWalletIdAsync(int walletId);
+        Task<IEnumerable<Asset>> GetAssetsByWalletIdAsync(Guid walletId);
     }
 }

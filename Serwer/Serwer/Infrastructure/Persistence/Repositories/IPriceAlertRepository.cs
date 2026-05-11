@@ -5,7 +5,7 @@ namespace Investe.Infrastructure.Persistence.Repositories
 {
     public interface IPriceAlertRepository : IBaseRepository<PriceAlert>
     {
-        Task<IEnumerable<PriceAlert>> GetAlertsByUserIdAsync(string userId);
+        Task<IEnumerable<PriceAlert>> GetAlertsByUserIdAsync(Guid userId);
         Task<IEnumerable<PriceAlert>> GetActiveAlertsAsync();
     }
 }

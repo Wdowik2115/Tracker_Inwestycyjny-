@@ -5,6 +5,6 @@ namespace Investe.Infrastructure.Persistence.Repositories
 {
     public interface ITransactionRepository : IBaseRepository<Transaction>
     {
-        Task<IEnumerable<Transaction>> GetTransactionsByWalletIdAsync(int walletId);
+        Task<IEnumerable<Transaction>> GetTransactionsByWalletIdAsync(Guid walletId);
     }
 }

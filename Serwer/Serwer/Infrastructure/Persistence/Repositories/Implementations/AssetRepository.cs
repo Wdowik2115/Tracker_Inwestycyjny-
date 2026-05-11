@@ -10,7 +10,7 @@ namespace Investe.Infrastructure.Persistence.Repositories.Implementations
         {
         }
 
-        public async Task<IEnumerable<Asset>> GetAssetsByWalletIdAsync(int walletId)
+        public async Task<IEnumerable<Asset>> GetAssetsByWalletIdAsync(Guid walletId)
         {
             return await _dbContext.Assets
                 .Where(a => a.WalletId == walletId)
