@@ -93,5 +93,18 @@ Desktop.ini
 .env.test
 .env.production
 appsettings.Development.json
-# Note: Usually, you keep appsettings.json in git, 
+# Note: Usually, you keep appsettings.json in git,
 # but keep specific secrets in user-secrets or environment variables.
+
+# ==========================================
+# AI Tools
+# ==========================================
+# Claude Code
+.claude/
+
+# Google Gemini CLI
+.gemini/
+
+# GitHub Copilot CLI / Copilot workspace
+.copilot/
+.github/copilot/
