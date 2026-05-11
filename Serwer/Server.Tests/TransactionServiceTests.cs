@@ -1,26 +1,56 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using Xunit;
 using Investe.Application.Services;
+using Investe.Application.Interfaces.Services;
 using Investe.Infrastructure.Persistence.UnitOfWork;
 using Investe.Infrastructure.Persistence.Repositories;
 using Investe.Application.DTOs;
 using Investe.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Serwer.Tests.Application.Services
 {
     public class TransactionServiceTests
     {
-        [Fact]
-        public async Task ProcessTransactionAsync_Buy_NewAsset_AddsAssetAndTransactionAndCompletes()
+        private static (Mock<IUnitOfWork>, Mock<IWalletRepository>, Mock<IAssetRepository>, Mock<ITransactionRepository>, Mock<ICoinPriceService>, TransactionService)
+            BuildSut(Guid userId, Guid walletId)
         {
-            // Arrange
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var walletRepoMock = new Mock<IWalletRepository>();
+            var assetRepoMock = new Mock<IAssetRepository>();
+            var transRepoMock = new Mock<ITransactionRepository>();
+            var priceServiceMock = new Mock<ICoinPriceService>();
+            var loggerMock = new Mock<ILogger<TransactionService>>();
+
+            var wallet = new Wallet { Id = walletId, UserId = userId };
+            walletRepoMock.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+
+            priceServiceMock
+                .Setup(p => p.GetHistoricalPriceAsync(It.IsAny<string>(), It.IsAny<DateTime>()))
+                .ReturnsAsync(0m);
+
+            unitOfWorkMock.Setup(u => u.Wallets).Returns(walletRepoMock.Object);
+            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
+            unitOfWorkMock.Setup(u => u.Transactions).Returns(transRepoMock.Object);
+
+            var svc = new TransactionService(unitOfWorkMock.Object, priceServiceMock.Object, loggerMock.Object);
+
+            return (unitOfWorkMock, walletRepoMock, assetRepoMock, transRepoMock, priceServiceMock, svc);
+        }
+
+        [Fact]
+        public async Task AddTransactionAsync_Buy_NewAsset_AddsAssetAndTransactionAndCompletes()
+        {
+            var userId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var (uow, _, assetRepo, transRepo, _, svc) = BuildSut(userId, walletId);
+
             var dto = new TransactionCreateDto
             {
-                WalletId = 1,
+                WalletId = walletId,
                 CoinId = "coin-x",
                 Symbol = "CX",
                 Type = "Buy",
@@ -29,43 +59,26 @@ namespace Serwer.Tests.Application.Services
                 Notes = "test buy"
             };
 
-            var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var assetRepoMock = new Mock<IAssetRepository>();
-            var transRepoMock = new Mock<ITransactionRepository>();
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(new List<Asset>());
 
-            assetRepoMock
-                .Setup(r => r.GetAssetsByWalletIdAsync(dto.WalletId))
-                .ReturnsAsync(new List<Asset>()); // no existing assets
+            await svc.AddTransactionAsync(userId, dto);
 
-            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
-            unitOfWorkMock.Setup(u => u.Transactions).Returns(transRepoMock.Object);
-
-            var svc = new TransactionService(unitOfWorkMock.Object);
-
-            // Act
-            await svc.ProcessTransactionAsync(dto);
-
-            // Assert
-            assetRepoMock.Verify(r => r.AddAsync(It.Is<Asset>(a => a.CoinId == dto.CoinId && a.Quantity == dto.Quantity)), Times.Once);
-            transRepoMock.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
-            unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
+            assetRepo.Verify(r => r.AddAsync(It.Is<Asset>(a => a.CoinId == dto.CoinId && a.Quantity == dto.Quantity)), Times.Once);
+            transRepo.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
+            uow.Verify(u => u.CompleteAsync(), Times.Once);
         }
 
         [Fact]
-        public async Task ProcessTransactionAsync_Buy_ExistingAsset_UpdatesAveragePrice()
+        public async Task AddTransactionAsync_Buy_ExistingAsset_UpdatesAveragePrice()
         {
-            // Arrange
-            var existing = new Asset
-            {
-                WalletId = 1,
-                CoinId = "coin-y",
-                Quantity = 2m,
-                AverageBuyPrice = 10m
-            };
+            var userId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var (uow, _, assetRepo, transRepo, _, svc) = BuildSut(userId, walletId);
 
+            var existing = new Asset { WalletId = walletId, CoinId = "coin-y", Quantity = 2m, AverageBuyPrice = 10m };
             var dto = new TransactionCreateDto
             {
-                WalletId = 1,
+                WalletId = walletId,
                 CoinId = "coin-y",
                 Symbol = "CY",
                 Type = "Buy",
@@ -73,45 +86,34 @@ namespace Serwer.Tests.Application.Services
                 PriceAtTime = 40m
             };
 
-            var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var assetRepoMock = new Mock<IAssetRepository>();
-            var transRepoMock = new Mock<ITransactionRepository>();
-
-            assetRepoMock
-                .Setup(r => r.GetAssetsByWalletIdAsync(dto.WalletId))
-                .ReturnsAsync(new List<Asset> { existing });
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(new List<Asset> { existing });
 
             Asset? updatedArg = null;
-            assetRepoMock
-                .Setup(r => r.UpdateAsync(It.IsAny<Asset>()))
+            assetRepo.Setup(r => r.UpdateAsync(It.IsAny<Asset>()))
                 .Callback<Asset>(a => updatedArg = a)
                 .Returns(Task.CompletedTask);
 
-            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
-            unitOfWorkMock.Setup(u => u.Transactions).Returns(transRepoMock.Object);
+            await svc.AddTransactionAsync(userId, dto);
 
-            var svc = new TransactionService(unitOfWorkMock.Object);
-
-            // Act
-            await svc.ProcessTransactionAsync(dto);
-
-            // Assert
-            // Expected new average: (2*10 + 1*40) / (2+1) = 20
+            // Expected average: (2*10 + 1*40) / 3 = 20
             Assert.NotNull(updatedArg);
             Assert.Equal(3m, updatedArg!.Quantity);
             Assert.Equal(20m, updatedArg.AverageBuyPrice);
-            assetRepoMock.Verify(r => r.UpdateAsync(It.IsAny<Asset>()), Times.Once);
-            transRepoMock.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
-            unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
+            assetRepo.Verify(r => r.UpdateAsync(It.IsAny<Asset>()), Times.Once);
+            transRepo.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
+            uow.Verify(u => u.CompleteAsync(), Times.Once);
         }
 
         [Fact]
-        public async Task ProcessTransactionAsync_Sell_Insufficient_ThrowsInvalidOperationException()
+        public async Task AddTransactionAsync_Sell_Insufficient_ThrowsInvalidOperationException()
         {
-            // Arrange
+            var userId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var (uow, _, assetRepo, transRepo, _, svc) = BuildSut(userId, walletId);
+
             var dto = new TransactionCreateDto
             {
-                WalletId = 1,
+                WalletId = walletId,
                 CoinId = "coin-z",
                 Symbol = "CZ",
                 Type = "Sell",
@@ -119,41 +121,24 @@ namespace Serwer.Tests.Application.Services
                 PriceAtTime = 1m
             };
 
-            var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var assetRepoMock = new Mock<IAssetRepository>();
-            var transRepoMock = new Mock<ITransactionRepository>();
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(new List<Asset>());
 
-            // no assets => insufficient
-            assetRepoMock
-                .Setup(r => r.GetAssetsByWalletIdAsync(dto.WalletId))
-                .ReturnsAsync(new List<Asset>());
-
-            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
-            unitOfWorkMock.Setup(u => u.Transactions).Returns(transRepoMock.Object);
-
-            var svc = new TransactionService(unitOfWorkMock.Object);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => svc.ProcessTransactionAsync(dto));
-            transRepoMock.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Never);
-            unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Never);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => svc.AddTransactionAsync(userId, dto));
+            transRepo.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Never);
+            uow.Verify(u => u.CompleteAsync(), Times.Never);
         }
 
         [Fact]
-        public async Task ProcessTransactionAsync_Sell_AllQuantity_DeletesAsset()
+        public async Task AddTransactionAsync_Sell_AllQuantity_DeletesAsset()
         {
-            // Arrange
-            var existing = new Asset
-            {
-                WalletId = 1,
-                CoinId = "coin-s",
-                Quantity = 1m,
-                AverageBuyPrice = 5m
-            };
+            var userId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var (uow, _, assetRepo, transRepo, _, svc) = BuildSut(userId, walletId);
 
+            var existing = new Asset { WalletId = walletId, CoinId = "coin-s", Quantity = 1m, AverageBuyPrice = 5m };
             var dto = new TransactionCreateDto
             {
-                WalletId = 1,
+                WalletId = walletId,
                 CoinId = "coin-s",
                 Symbol = "CS",
                 Type = "Sell",
@@ -161,33 +146,19 @@ namespace Serwer.Tests.Application.Services
                 PriceAtTime = 10m
             };
 
-            var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var assetRepoMock = new Mock<IAssetRepository>();
-            var transRepoMock = new Mock<ITransactionRepository>();
-
-            assetRepoMock
-                .Setup(r => r.GetAssetsByWalletIdAsync(dto.WalletId))
-                .ReturnsAsync(new List<Asset> { existing });
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(new List<Asset> { existing });
 
             Asset? deletedArg = null;
-            assetRepoMock
-                .Setup(r => r.DeleteAsync(It.IsAny<Asset>()))
+            assetRepo.Setup(r => r.DeleteAsync(It.IsAny<Asset>()))
                 .Callback<Asset>(a => deletedArg = a)
                 .Returns(Task.CompletedTask);
 
-            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
-            unitOfWorkMock.Setup(u => u.Transactions).Returns(transRepoMock.Object);
+            await svc.AddTransactionAsync(userId, dto);
 
-            var svc = new TransactionService(unitOfWorkMock.Object);
-
-            // Act
-            await svc.ProcessTransactionAsync(dto);
-
-            // Assert
             Assert.NotNull(deletedArg);
             Assert.Equal(existing.CoinId, deletedArg!.CoinId);
-            transRepoMock.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
-            unitOfWorkMock.Verify(u => u.CompleteAsync(), Times.Once);
+            transRepo.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
+            uow.Verify(u => u.CompleteAsync(), Times.Once);
         }
     }
 }

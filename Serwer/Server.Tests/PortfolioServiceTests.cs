@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,84 +9,71 @@ using Investe.Application.Interfaces.Services;
 using Investe.Infrastructure.Persistence.UnitOfWork;
 using Investe.Infrastructure.Persistence.Repositories;
 using Investe.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Serwer.Tests.Application.Services
 {
     public class PortfolioServiceTests
     {
-        [Fact]
-        public async Task CalculateTotalValueAsync_ReturnsSumOfQuantityTimesPrice()
+        private static (Mock<IUnitOfWork>, Mock<IWalletRepository>, Mock<IAssetRepository>, Mock<ICoinPriceService>, PortfolioService)
+            BuildSut()
         {
-            // Arrange
-            const int walletId = 1;
-            var assets = new List<Asset>
-            {
-                new Asset { CoinId = "btc", Quantity = 2m },
-                new Asset { CoinId = "eth", Quantity = 3m }
-            };
+            var uow = new Mock<IUnitOfWork>();
+            var walletRepo = new Mock<IWalletRepository>();
+            var assetRepo = new Mock<IAssetRepository>();
+            var priceService = new Mock<ICoinPriceService>();
+            var logger = new Mock<ILogger<PortfolioService>>();
 
-            var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var assetRepoMock = new Mock<IAssetRepository>();
-            var priceServiceMock = new Mock<ICoinPriceService>();
+            uow.Setup(u => u.Wallets).Returns(walletRepo.Object);
+            uow.Setup(u => u.Assets).Returns(assetRepo.Object);
 
-            assetRepoMock
-                .Setup(r => r.GetAssetsByWalletIdAsync(walletId))
-                .ReturnsAsync(assets);
-
-            priceServiceMock
-                .Setup(p => p.GetCurrentPriceAsync("btc"))
-                .ReturnsAsync(100m);
-            priceServiceMock
-                .Setup(p => p.GetCurrentPriceAsync("eth"))
-                .ReturnsAsync(10m);
-
-            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
-
-            var svc = new PortfolioService(unitOfWorkMock.Object, priceServiceMock.Object);
-
-            // Act
-            var total = await svc.CalculateTotalValueAsync(walletId);
-
-            // Assert
-            // 2 * 100 + 3 * 10 = 230
-            Assert.Equal(230m, total);
+            var svc = new PortfolioService(uow.Object, priceService.Object, logger.Object);
+            return (uow, walletRepo, assetRepo, priceService, svc);
         }
 
         [Fact]
-        public async Task GetPnLReportAsync_CallsPriceServiceForEachAssetAndReturnsSameCount()
+        public async Task GetSummaryAsync_SingleAsset_ReturnsCorrectPosition()
         {
-            // Arrange
-            const int walletId = 2;
+            var userId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var (_, walletRepo, assetRepo, priceService, svc) = BuildSut();
+
+            var wallet = new Wallet { Id = walletId, UserId = userId };
             var assets = new List<Asset>
             {
-                new Asset { CoinId = "a", Quantity = 1m, AverageBuyPrice = 5m },
-                new Asset { CoinId = "b", Quantity = 2m, AverageBuyPrice = 3m }
+                new Asset { Symbol = "BTC", CoinId = "bitcoin", Quantity = 2m, AverageBuyPrice = 30000m }
             };
 
-            var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var assetRepoMock = new Mock<IAssetRepository>();
-            var priceServiceMock = new Mock<ICoinPriceService>();
+            walletRepo.Setup(r => r.GetWalletsByUserIdAsync(userId)).ReturnsAsync(new List<Wallet> { wallet });
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(assets);
+            priceService.Setup(p => p.GetCurrentPriceAsync("BTC")).ReturnsAsync(35000m);
 
-            assetRepoMock
-                .Setup(r => r.GetAssetsByWalletIdAsync(walletId))
-                .ReturnsAsync(assets);
+            var summary = await svc.GetSummaryAsync(userId);
 
-            priceServiceMock
-                .Setup(p => p.GetCurrentPriceAsync(It.IsAny<string>()))
-                .ReturnsAsync(10m);
+            Assert.Single(summary.Positions);
+            var pos = summary.Positions.First();
+            Assert.Equal("BTC", pos.Symbol);
+            Assert.Equal(2m, pos.Quantity);
+            Assert.Equal(35000m, pos.CurrentPrice);
+            Assert.Equal(70000m, pos.ValueUsdt);    // 2 * 35000
+            Assert.Equal(10000m, pos.PnlUsdt);      // 70000 - 60000
+            Assert.Equal(70000m, summary.TotalValueUsdt);
+            Assert.Equal(10000m, summary.TotalPnlUsdt);
+        }
 
-            unitOfWorkMock.Setup(u => u.Assets).Returns(assetRepoMock.Object);
+        [Fact]
+        public async Task GetSummaryAsync_EmptyPortfolio_ReturnsZeroTotals()
+        {
+            var userId = Guid.NewGuid();
+            var (_, walletRepo, _, _, svc) = BuildSut();
 
-            var svc = new PortfolioService(unitOfWorkMock.Object, priceServiceMock.Object);
+            walletRepo.Setup(r => r.GetWalletsByUserIdAsync(userId)).ReturnsAsync(new List<Wallet>());
 
-            // Act
-            var report = (await svc.GetPnLReportAsync(walletId)).ToList();
+            var summary = await svc.GetSummaryAsync(userId);
 
-            // Assert
-            Assert.Equal(assets.Count, report.Count);
-            // verify price service called for each asset coin id
-            priceServiceMock.Verify(p => p.GetCurrentPriceAsync("a"), Times.Once);
-            priceServiceMock.Verify(p => p.GetCurrentPriceAsync("b"), Times.Once);
+            Assert.Empty(summary.Positions);
+            Assert.Equal(0m, summary.TotalValueUsdt);
+            Assert.Equal(0m, summary.TotalPnlUsdt);
         }
     }
 }
