@@ -32,6 +32,13 @@ namespace Serwer.Controllers
             return CreatedAtAction(nameof(GetTransactions), new { }, transaction);
         }
 
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> UpdateTransaction(Guid id, [FromBody] TransactionUpdateDto dto)
+        {
+            var result = await _transactionService.UpdateTransactionAsync(User.GetUserId(), id, dto);
+            return Ok(result);
+        }
+
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteTransaction(Guid id)
         {

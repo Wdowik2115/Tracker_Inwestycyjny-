@@ -5,7 +5,7 @@ import { WalletService } from '../../services/wallet.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { TransactionCreateDto, TransactionDto, WalletDto } from '../../models';
+import { TransactionCreateDto, TransactionDto, TransactionUpdateDto, WalletDto } from '../../models';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -31,6 +31,8 @@ export class TransactionsComponent implements OnInit {
   readonly PAGE_SIZE = 20;
 
   addModalOpen = signal(false);
+  editModalOpen = signal(false);
+  editingTx = signal<TransactionDto | null>(null);
   submitting = signal(false);
 
   form = {
@@ -41,6 +43,13 @@ export class TransactionsComponent implements OnInit {
     executedAt: signal(''),
     walletId: signal(''),
     notes: signal('')
+  };
+
+  editForm = {
+    priceAtTime: signal(''),
+    executedAt: signal(''),
+    notes: signal(''),
+    costBasisPerUnit: signal('')
   };
 
   filtered = computed(() => {
@@ -121,6 +130,60 @@ export class TransactionsComponent implements OnInit {
         this.toastService.error(e.error?.message ?? 'Failed to add transaction');
         this.submitting.set(false);
       }
+    });
+  }
+
+  openEditModal(tx: TransactionDto): void {
+    this.editingTx.set(tx);
+    this.editForm.priceAtTime.set(String(tx.priceAtTime));
+    this.editForm.executedAt.set(tx.executedAt ? new Date(tx.executedAt).toISOString().slice(0, 16) : '');
+    this.editForm.notes.set(tx.notes ?? '');
+    this.editForm.costBasisPerUnit.set(tx.costBasisPerUnit != null ? String(tx.costBasisPerUnit) : '');
+    this.editModalOpen.set(true);
+  }
+
+  closeEditModal(): void {
+    this.editModalOpen.set(false);
+    this.editingTx.set(null);
+  }
+
+  submitEdit(): void {
+    const tx = this.editingTx();
+    if (!tx) return;
+
+    const price = parseFloat(this.editForm.priceAtTime());
+    if (isNaN(price) || price <= 0) {
+      this.toastService.error('Price must be a positive number');
+      return;
+    }
+
+    const dto: TransactionUpdateDto = {
+      priceAtTime: price,
+      executedAt: this.editForm.executedAt() || undefined,
+      notes: this.editForm.notes(),
+      costBasisPerUnit: this.editForm.costBasisPerUnit() ? parseFloat(this.editForm.costBasisPerUnit()) : undefined
+    };
+
+    this.submitting.set(true);
+    this.transactionService.updateTransaction(tx.id, dto).subscribe({
+      next: () => {
+        this.toastService.success('Transaction updated');
+        this.closeEditModal();
+        this.load();
+        this.submitting.set(false);
+      },
+      error: e => {
+        this.toastService.error(e.error?.message ?? 'Failed to update transaction');
+        this.submitting.set(false);
+      }
+    });
+  }
+
+  deleteTx(id: string): void {
+    if (!confirm('Delete this transaction? This cannot be undone.')) return;
+    this.transactionService.deleteTransaction(id).subscribe({
+      next: () => { this.toastService.success('Transaction deleted'); this.load(); },
+      error: e => this.toastService.error(e.error?.message ?? 'Failed to delete transaction')
     });
   }
 

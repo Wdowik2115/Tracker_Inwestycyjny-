@@ -12,5 +12,8 @@ namespace Investe.Application.Interfaces.Services
 
         /// <summary>Deletes a transaction owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteTransactionAsync(Guid userId, Guid transactionId);
+
+        /// <summary>Updates editable metadata fields of a transaction. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        Task<TransactionDto> UpdateTransactionAsync(Guid userId, Guid transactionId, TransactionUpdateDto dto);
     }
 }

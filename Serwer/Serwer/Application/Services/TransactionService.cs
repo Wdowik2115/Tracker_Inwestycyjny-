@@ -125,7 +125,7 @@ namespace Investe.Application.Services
             return result.OrderByDescending(t => t.ExecutedAt);
         }
 
-        /// <summary>Deletes a transaction owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        /// <summary>Deletes a transaction and reverses its effect on the asset position.</summary>
         public async Task DeleteTransactionAsync(Guid userId, Guid transactionId)
         {
             var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
@@ -137,8 +137,99 @@ namespace Investe.Application.Services
             if (wallet.UserId != userId)
                 throw new UnauthorizedAccessException("Transaction does not belong to this user.");
 
+            var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
+            var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);
+
+            if (transaction.Type == TransactionType.Buy)
+            {
+                if (asset != null)
+                {
+                    var newQty = asset.Quantity - transaction.Quantity;
+                    if (newQty <= 0)
+                    {
+                        await _unitOfWork.Assets.DeleteAsync(asset);
+                    }
+                    else
+                    {
+                        var newAvgCost = (asset.Quantity * asset.AverageBuyPrice - transaction.Quantity * transaction.PriceAtTime) / newQty;
+                        asset.Quantity = newQty;
+                        asset.AverageBuyPrice = Math.Max(0m, newAvgCost);
+                        await _unitOfWork.Assets.UpdateAsync(asset);
+                    }
+                }
+            }
+            else if (transaction.Type == TransactionType.Sell)
+            {
+                if (asset != null)
+                {
+                    asset.Quantity += transaction.Quantity;
+                    await _unitOfWork.Assets.UpdateAsync(asset);
+                }
+                else
+                {
+                    // Asset was fully sold and removed — recreate it with the restored quantity.
+                    // AverageBuyPrice cannot be recovered here; it will be 0 until the user corrects it.
+                    var restored = new Asset
+                    {
+                        WalletId = transaction.WalletId,
+                        CoinId = transaction.CoinId,
+                        Symbol = transaction.Symbol,
+                        Name = transaction.Symbol,
+                        Quantity = transaction.Quantity,
+                        AverageBuyPrice = 0m
+                    };
+                    await _unitOfWork.Assets.AddAsync(restored);
+                }
+            }
+
             await _unitOfWork.Transactions.DeleteAsync(transaction);
             await _unitOfWork.CompleteAsync();
+        }
+
+        /// <summary>Updates editable metadata fields of a transaction and adjusts the asset position when price changes.</summary>
+        public async Task<TransactionDto> UpdateTransactionAsync(Guid userId, Guid transactionId, TransactionUpdateDto dto)
+        {
+            var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
+                ?? throw new KeyNotFoundException($"Transaction {transactionId} not found.");
+
+            var wallet = await _unitOfWork.Wallets.GetByIdAsync(transaction.WalletId)
+                ?? throw new KeyNotFoundException($"Wallet {transaction.WalletId} not found.");
+
+            if (wallet.UserId != userId)
+                throw new UnauthorizedAccessException("Transaction does not belong to this user.");
+
+            if (dto.PriceAtTime.HasValue)
+            {
+                // For Buy transactions, re-weight the asset's average cost to reflect the corrected price.
+                if (transaction.Type == TransactionType.Buy)
+                {
+                    var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
+                    var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);
+                    if (asset != null && asset.Quantity > 0)
+                    {
+                        var oldContribution = transaction.Quantity * transaction.PriceAtTime;
+                        var newContribution = transaction.Quantity * dto.PriceAtTime.Value;
+                        var newAvgCost = (asset.Quantity * asset.AverageBuyPrice - oldContribution + newContribution) / asset.Quantity;
+                        asset.AverageBuyPrice = Math.Max(0m, newAvgCost);
+                        await _unitOfWork.Assets.UpdateAsync(asset);
+                    }
+                }
+
+                transaction.PriceAtTime = dto.PriceAtTime.Value;
+                transaction.TotalValue = transaction.Quantity * dto.PriceAtTime.Value;
+            }
+            if (dto.CostBasisPerUnit.HasValue)
+                transaction.CostBasisPerUnit = dto.CostBasisPerUnit.Value;
+            if (dto.ExecutedAt.HasValue)
+                transaction.ExecutedAt = dto.ExecutedAt.Value.ToUniversalTime();
+            if (dto.Notes is not null)
+                transaction.Notes = dto.Notes;
+
+            await _unitOfWork.Transactions.UpdateAsync(transaction);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Transaction {TxId} updated by user {UserId}", transactionId, userId);
+            return transaction.ToDto();
         }
     }
 }

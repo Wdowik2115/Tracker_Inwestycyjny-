@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TransactionDto, TransactionCreateDto } from '../models';
+import { TransactionDto, TransactionCreateDto, TransactionUpdateDto } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -18,6 +18,10 @@ export class TransactionService {
 
   addTransaction(dto: TransactionCreateDto): Observable<TransactionDto> {
     return this.http.post<TransactionDto>(this.apiUrl, dto);
+  }
+
+  updateTransaction(id: string, dto: TransactionUpdateDto): Observable<TransactionDto> {
+    return this.http.put<TransactionDto>(`${this.apiUrl}/${id}`, dto);
   }
 
   deleteTransaction(id: string): Observable<void> {

@@ -56,6 +56,13 @@ export interface TransactionCreateDto {
   notes: string;
 }
 
+export interface TransactionUpdateDto {
+  priceAtTime?: number;
+  costBasisPerUnit?: number;
+  executedAt?: string;
+  notes?: string;
+}
+
 // Portfolio models
 export interface PositionDto {
   symbol: string;

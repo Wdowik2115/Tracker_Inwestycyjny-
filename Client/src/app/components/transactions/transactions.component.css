@@ -264,3 +264,35 @@
   border-color: var(--text-secondary);
   color: var(--text-primary);
 }
+
+/* Row action buttons */
+.row-actions {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.icon-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.icon-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
