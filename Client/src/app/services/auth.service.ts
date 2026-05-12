@@ -24,9 +24,21 @@ export class AuthService {
 
   private checkAuth(): void {
     const token = this.getToken();
-    if (token) {
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp < Date.now() / 1000) {
+        localStorage.removeItem(this.tokenKey);
+        return;
+      }
       this.isAuthenticated.set(true);
-      // You might want to validate token with backend here
+      // Restore currentUser from token claims if available
+      if (payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']) {
+        const email = payload.email ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+        this.currentUser.set({ token, userId: payload.sub ?? '', email });
+      }
+    } catch {
+      localStorage.removeItem(this.tokenKey);
     }
   }
 

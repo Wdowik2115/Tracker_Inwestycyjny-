@@ -1,0 +1,105 @@
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">Alerts</h1>
+    <button class="btn-primary" (click)="openAddModal()">+ Add Alert</button>
+  </div>
+
+  @if (loading()) {
+    <div class="center">
+      <app-loading-spinner size="md" />
+    </div>
+  } @else if (alerts().length === 0) {
+    <div class="empty-state">
+      <p>No alerts yet. Add one to get notified when a price target is reached.</p>
+    </div>
+  } @else {
+
+    <!-- Active alerts -->
+    @if (active().length > 0) {
+      <h2 class="section-label">Active</h2>
+      <div class="alerts-grid">
+        @for (alert of active(); track alert.id) {
+          <div class="alert-card">
+            <div class="alert-top">
+              <span class="alert-symbol">{{ alert.symbol }}</span>
+              <span class="badge-info">Active</span>
+            </div>
+            <div class="alert-target">
+              <span class="direction-icon">{{ alert.direction === AlertDirection.Above ? '↑' : '↓' }}</span>
+              <span class="target-price">{{ formatPrice(alert.targetPrice) }}</span>
+              <span class="text-secondary direction-label">{{ alert.direction === AlertDirection.Above ? 'Above' : 'Below' }}</span>
+            </div>
+            <div class="alert-footer">
+              <span class="text-secondary">Created {{ formatDate(alert.createdAt) }}</span>
+              <button class="delete-btn" (click)="deleteAlert(alert.id)" title="Delete alert">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Triggered alerts -->
+    @if (triggered().length > 0) {
+      <h2 class="section-label section-label--muted">Triggered</h2>
+      <div class="alerts-grid">
+        @for (alert of triggered(); track alert.id) {
+          <div class="alert-card alert-card--triggered">
+            <div class="alert-top">
+              <span class="alert-symbol">{{ alert.symbol }}</span>
+              <span class="badge-success">Triggered</span>
+            </div>
+            <div class="alert-target">
+              <span class="direction-icon">{{ alert.direction === AlertDirection.Above ? '↑' : '↓' }}</span>
+              <span class="target-price">{{ formatPrice(alert.targetPrice) }}</span>
+              <span class="text-secondary direction-label">{{ alert.direction === AlertDirection.Above ? 'Above' : 'Below' }}</span>
+            </div>
+            <div class="alert-footer">
+              <span class="text-secondary">
+                @if (alert.triggeredAt) { Triggered {{ formatDate(alert.triggeredAt) }} }
+                @else { Created {{ formatDate(alert.createdAt) }} }
+              </span>
+              <button class="delete-btn" (click)="deleteAlert(alert.id)" title="Delete alert">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- Add Alert Modal -->
+<app-modal title="Add Price Alert" [isOpen]="addModalOpen()" (closed)="closeAddModal()">
+  <div class="form-stack">
+    <div class="form-group">
+      <label>Asset Symbol *</label>
+      <input class="form-input" type="text" placeholder="BTC" [value]="form.symbol()" (input)="form.symbol.set($any($event.target).value)" />
+    </div>
+    <div class="form-group">
+      <label>Target Price *</label>
+      <input class="form-input" type="number" min="0" step="any" placeholder="50000" [value]="form.targetPrice()" (input)="form.targetPrice.set($any($event.target).value)" />
+    </div>
+    <div class="form-group">
+      <label>Direction</label>
+      <div class="toggle-group">
+        <button class="toggle-btn" [class.active]="form.direction() === AlertDirection.Above" (click)="form.direction.set(AlertDirection.Above)">↑ Above</button>
+        <button class="toggle-btn" [class.active]="form.direction() === AlertDirection.Below" (click)="form.direction.set(AlertDirection.Below)">↓ Below</button>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+    <button class="btn-primary" [disabled]="submitting()" (click)="submitAdd()">
+      {{ submitting() ? 'Creating…' : 'Create Alert' }}
+    </button>
+  </div>
+</app-modal>

@@ -1,0 +1,69 @@
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">Settings</h1>
+  </div>
+
+  <!-- Account -->
+  <section class="settings-section">
+    <h2 class="section-title">Account</h2>
+    <div class="settings-card">
+      <div class="setting-row">
+        <span class="setting-label">Email</span>
+        <span class="setting-value">{{ authService.currentUser()?.email ?? '—' }}</span>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3 class="card-subtitle">Change Password</h3>
+      <div class="form-stack">
+        <div class="form-group">
+          <label>Current Password</label>
+          <input class="form-input" type="password" placeholder="••••••••"
+            [value]="currentPassword()" (input)="currentPassword.set($any($event.target).value)" />
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input class="form-input" type="password" placeholder="••••••••"
+            [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" />
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input class="form-input" type="password" placeholder="••••••••"
+            [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)" />
+        </div>
+        <button class="btn-primary" disabled>Update Password</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Display -->
+  <section class="settings-section">
+    <h2 class="section-title">Display</h2>
+    <div class="settings-card">
+      <div class="setting-row">
+        <div>
+          <span class="setting-label">Currency</span>
+          <p class="setting-hint">Used for portfolio value display</p>
+        </div>
+        <div class="toggle-group">
+          <button class="toggle-btn" [class.active]="currency() === 'USD'" (click)="setCurrency('USD')">USD</button>
+          <button class="toggle-btn" [class.active]="currency() === 'EUR'" (click)="setCurrency('EUR')">EUR</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Danger zone -->
+  <section class="settings-section">
+    <h2 class="section-title section-title--danger">Danger Zone</h2>
+    <div class="settings-card settings-card--danger">
+      <div class="setting-row">
+        <div>
+          <span class="setting-label">Delete Account</span>
+          <p class="setting-hint">Permanently remove your account and all data. This cannot be undone.</p>
+        </div>
+        <button class="btn-danger" disabled>Delete Account</button>
+      </div>
+    </div>
+  </section>
+</div>

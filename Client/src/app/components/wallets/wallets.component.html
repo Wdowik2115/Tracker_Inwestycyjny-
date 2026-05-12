@@ -1,0 +1,62 @@
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">Wallets</h1>
+    <button class="btn-primary" (click)="openAddModal()">+ Add Wallet</button>
+  </div>
+
+  @if (loading()) {
+    <div class="center">
+      <app-loading-spinner size="md" />
+    </div>
+  } @else if (wallets().length === 0) {
+    <div class="empty-state">
+      <p>No wallets yet. Add one to start tracking your portfolio.</p>
+    </div>
+  } @else {
+    <div class="wallets-grid">
+      @for (wallet of wallets(); track wallet.id) {
+        <div class="wallet-card">
+          <div class="wallet-card-header">
+            <div class="wallet-icon">◈</div>
+            <button class="delete-btn" (click)="deleteWallet(wallet.id)" title="Delete wallet">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="wallet-name">{{ wallet.name }}</div>
+
+          @if (wallet.description) {
+            <div class="wallet-desc text-secondary">{{ wallet.description }}</div>
+          }
+
+          <div class="wallet-value">{{ formatCurrency(wallet.totalValue) }}</div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Add Wallet Modal -->
+<app-modal title="Add Wallet" [isOpen]="addModalOpen()" (closed)="closeAddModal()">
+  <div class="form-stack">
+    <div class="form-group">
+      <label>Wallet Name *</label>
+      <input class="form-input" type="text" placeholder="My Binance Account"
+        [value]="form.name()" (input)="form.name.set($any($event.target).value)" />
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input class="form-input" type="text" placeholder="Optional description"
+        [value]="form.description()" (input)="form.description.set($any($event.target).value)" />
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+    <button class="btn-primary" [disabled]="submitting()" (click)="submitAdd()">
+      {{ submitting() ? 'Creating…' : 'Create Wallet' }}
+    </button>
+  </div>
+</app-modal>

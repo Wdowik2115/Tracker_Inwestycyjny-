@@ -1,0 +1,73 @@
+<aside class="sidebar">
+
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <span class="logo-mark">▲</span>
+    <span class="logo-text">Investee</span>
+  </div>
+
+  <!-- Portfolio Sources -->
+  <section class="sidebar-section">
+    <div class="sidebar-section-header">
+      <span class="sidebar-section-title">Portfolio sources</span>
+      <a class="sidebar-add-btn" routerLink="/wallets" title="Add source">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </a>
+    </div>
+
+    @if (wallets().length === 0) {
+      <p class="sidebar-empty">No sources yet</p>
+    } @else {
+      @for (wallet of wallets(); track wallet.id) {
+        <button
+          class="source-card"
+          [class.source-card--active]="selectedSourceId() === wallet.id"
+          (click)="selectSource(wallet.id)">
+          <span class="source-icon">◈</span>
+          <span class="source-name">{{ wallet.name }}</span>
+          <span class="source-value">${{ wallet.totalValue.toFixed(0) }}</span>
+        </button>
+      }
+    }
+  </section>
+
+  <!-- Positions -->
+  <section class="sidebar-section sidebar-section--grow">
+    <div class="sidebar-section-header">
+      <span class="sidebar-section-title">Positions</span>
+    </div>
+
+    @if (!portfolio()) {
+      <p class="sidebar-empty">Loading…</p>
+    } @else if (portfolio()!.positions.length === 0) {
+      <p class="sidebar-empty">No positions</p>
+    } @else {
+      @for (pos of portfolio()!.positions; track pos.symbol) {
+        <button
+          class="position-row"
+          [class.position-row--active]="selectedAsset() === pos.symbol"
+          (click)="selectAsset(pos.symbol)">
+          <span class="position-symbol">{{ pos.symbol }}</span>
+          <span class="{{ getPnlClass(pos.pnlPercent) }}">{{ formatPnl(pos.pnlPercent) }}</span>
+        </button>
+      }
+    }
+  </section>
+
+  <!-- Profile -->
+  <div class="sidebar-profile">
+    <div class="profile-info">
+      <span class="profile-avatar">{{ (currentUser()?.email ?? 'U')[0].toUpperCase() }}</span>
+      <span class="profile-email">{{ currentUser()?.email ?? 'User' }}</span>
+    </div>
+    <button class="logout-btn" (click)="logout()" title="Logout">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+      </svg>
+    </button>
+  </div>
+
+</aside>

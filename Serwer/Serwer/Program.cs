@@ -30,21 +30,11 @@ namespace Serwer
                     .AllowAnyMethod()));
 
             // ── Database ──────────────────────────────────────────────────────
-            var isDevelopment = builder.Environment.IsDevelopment();
-            if (isDevelopment)
-            {
-                builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TrackerDev"));
-            }
-            else
-            {
-                var connectionString =
-                    builder.Configuration.GetConnectionString("DefaultConnection")
-                    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
-                builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer(connectionString));
-            }
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(connectionString));
 
             // ── Memory cache + HTTP clients ───────────────────────────────────
             builder.Services.AddMemoryCache();

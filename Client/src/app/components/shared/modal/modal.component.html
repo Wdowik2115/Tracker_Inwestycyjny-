@@ -1,0 +1,13 @@
+@if (isOpen()) {
+  <div class="modal-overlay" (click)="onOverlayClick($event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">{{ title() }}</h3>
+        <button class="modal-close" (click)="close()">✕</button>
+      </div>
+      <div class="modal-body">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+}
