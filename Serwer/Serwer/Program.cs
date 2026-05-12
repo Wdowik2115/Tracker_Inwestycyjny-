@@ -30,12 +30,21 @@ namespace Serwer
                     .AllowAnyMethod()));
 
             // ── Database ──────────────────────────────────────────────────────
-            var connectionString =
-                Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                ?? builder.Configuration.GetConnectionString("DefaultConnection");
+            var isDevelopment = builder.Environment.IsDevelopment();
+            if (isDevelopment)
+            {
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseInMemoryDatabase("TrackerDev"));
+            }
+            else
+            {
+                var connectionString =
+                    builder.Configuration.GetConnectionString("DefaultConnection")
+                    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            }
 
             // ── Memory cache + HTTP clients ───────────────────────────────────
             builder.Services.AddMemoryCache();
@@ -131,7 +140,14 @@ namespace Serwer
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                db.Database.Migrate();
+                if (app.Environment.IsDevelopment())
+                {
+                    db.Database.EnsureCreated();
+                }
+                else
+                {
+                    db.Database.Migrate();
+                }
             }
 
             app.Run();
