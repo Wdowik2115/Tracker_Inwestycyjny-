@@ -96,6 +96,10 @@ appsettings.Development.json
 # Note: Usually, you keep appsettings.json in git,
 # but keep specific secrets in user-secrets or environment variables.
 
+# Azure Publish Profiles (contain deployment credentials and subscription IDs)
+**/Properties/PublishProfiles/
+**/Properties/ServiceDependencies/
+
 # ==========================================
 # AI Tools
 # ==========================================

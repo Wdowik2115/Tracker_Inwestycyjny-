@@ -31,8 +31,8 @@ namespace Serwer
 
             // ── Database ──────────────────────────────────────────────────────
             var connectionString =
-                builder.Configuration.GetConnectionString("DefaultConnection")
-                ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+                Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
@@ -120,11 +120,8 @@ namespace Serwer
             // ── Middleware pipeline ───────────────────────────────────────────
             app.UseMiddleware<ErrorHandlingMiddleware>();
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseCors("Frontend");
             app.UseAuthentication();
