@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertDto, CreateAlertDto } from '../models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AlertService {
-  private apiUrl = 'http://localhost:5072/api/alerts';
+  private apiUrl = `${environment.apiUrl}/alerts`;
 
   constructor(private http: HttpClient) {}
 

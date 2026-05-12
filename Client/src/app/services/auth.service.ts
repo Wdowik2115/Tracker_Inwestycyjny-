@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { AuthResponseDto, LoginDto, RegisterDto } from '../models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5072/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
   private tokenKey = 'auth_token';
 
   isAuthenticated = signal<boolean>(false);

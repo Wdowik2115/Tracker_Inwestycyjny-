@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { WalletDto, CreateWalletDto } from '../models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WalletService {
-  private apiUrl = 'http://localhost:5072/api/wallets';
+  private apiUrl = `${environment.apiUrl}/wallets`;
 
   constructor(private http: HttpClient) { }
 
