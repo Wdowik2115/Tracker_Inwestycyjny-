@@ -129,11 +129,8 @@ namespace Serwer
             // ── Middleware pipeline ───────────────────────────────────────────
             app.UseMiddleware<ErrorHandlingMiddleware>();
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseCors("Frontend");
             app.UseAuthentication();
