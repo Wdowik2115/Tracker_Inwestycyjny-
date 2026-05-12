@@ -1,0 +1,159 @@
+<div class="dashboard">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+          <path d="M20 0L25 15L40 20L25 25L20 40L15 25L0 20L15 15L20 0Z" fill="#F5A623"/>
+        </svg>
+        <span>CryptoFlow</span>
+      </div>
+      <nav class="nav">
+        <a routerLink="/dashboard" class="nav-link active">Overview</a>
+        <a routerLink="/wallets" class="nav-link">Wallets</a>
+        <a routerLink="/transactions" class="nav-link">Trade</a>
+        <a routerLink="/alerts" class="nav-link">Profile</a>
+        <a href="#" class="nav-link">FAQ</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="logout()">Logout</button>
+        <button class="btn-primary">Register</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Manage Your Future<br>with CryptoFlow</h1>
+        <p>Safely Buy, Sell, and Hold Bitcoin, Ethereum, and<br>other assets in one place.</p>
+        <button class="btn-hero">Get Started Free</button>
+      </div>
+      <div class="hero-image">
+        <img src="/phone-mockup.png" alt="CryptoFlow App" />
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <div class="feature-card">
+        <div class="feature-icon exchange">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Instant Exchange</h3>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon secure">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Secure Storage</h3>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon portfolio">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M3 3V21H21M7 16L12 11L16 15L21 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Easy Portfolio</h3>
+      </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    @if (loading()) {
+      <div class="loading">Loading your portfolio...</div>
+    } @else if (portfolio()) {
+      <section class="portfolio-section">
+        <div class="portfolio-header">
+          <div>
+            <h2>Your Portfolio</h2>
+            <div class="balance">
+              <span class="balance-label">Total Balance</span>
+              <span class="balance-value">{{ formatCurrency(portfolio()!.totalValueUsdt) }}</span>
+              <span class="balance-change" [class]="getPerformanceClass(portfolio()!.totalPnlUsdt)">
+                {{ formatPercent((portfolio()!.totalPnlUsdt / portfolio()!.totalValueUsdt) * 100) }}
+              </span>
+            </div>
+          </div>
+          <div class="portfolio-actions">
+            <button class="btn-outline" routerLink="/dashboard">📊 Dashboard</button>
+            <button class="btn-outline" routerLink="/wallets">👛 Wallets</button>
+            <button class="btn-outline" routerLink="/portfolio">📈 Portfolio</button>
+          </div>
+        </div>
+
+        <!-- Assets List -->
+        <div class="assets-section">
+          <table class="assets-table">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Amount</th>
+                <th>Price</th>
+                <th>Performance</th>
+                <th class="text-right">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (position of portfolio()!.positions; track position.symbol) {
+                <tr>
+                  <td>
+                    <div class="asset-info">
+                      <div class="asset-icon">{{ position.symbol.charAt(0) }}</div>
+                      <div>
+                        <div class="asset-name">{{ position.symbol }}</div>
+                        <div class="asset-symbol">{{ position.symbol }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ position.quantity }}</td>
+                  <td>{{ formatCurrency(position.currentPrice) }}</td>
+                  <td>
+                    <div class="performance" [class]="getPerformanceClass(position.pnlPercent)">
+                      <span class="chart-mini">
+                        @if (position.pnlPercent >= 0) {
+                          📈
+                        } @else {
+                          📉
+                        }
+                      </span>
+                      <span>{{ formatPercent(position.pnlPercent) }}</span>
+                    </div>
+                  </td>
+                  <td class="text-right">{{ formatCurrency(position.valueUsdt) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- Recent Activity -->
+    <section class="activity-section">
+      <h3>Recent Transactions</h3>
+      <div class="transactions-list">
+        @for (tx of recentTransactions(); track tx.id) {
+          <div class="transaction-item">
+            <div class="transaction-icon" [class.buy]="tx.type === 'Buy'" [class.sell]="tx.type === 'Sell'">
+              {{ tx.type === 'Buy' ? '📥' : '📤' }}
+            </div>
+            <div class="transaction-details">
+              <div class="transaction-title">{{ tx.type }} {{ tx.symbol }}</div>
+              <div class="transaction-date">{{ tx.executedAt | date:'short' }}</div>
+            </div>
+            <div class="transaction-amount">
+              <div class="transaction-value">{{ formatCurrency(tx.totalValue) }}</div>
+              <div class="transaction-quantity">{{ tx.quantity }} {{ tx.symbol }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  </main>
+</div>
