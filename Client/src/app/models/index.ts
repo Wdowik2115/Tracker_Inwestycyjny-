@@ -101,3 +101,8 @@ export interface CreateAlertDto {
   targetPrice: number;
   direction: AlertDirection;
 }
+
+export interface UpdateAlertDto {
+  targetPrice?: number;
+  direction?: AlertDirection;
+}

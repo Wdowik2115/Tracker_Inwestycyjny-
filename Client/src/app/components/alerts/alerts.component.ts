@@ -4,7 +4,7 @@ import { AlertService } from '../../services/alert.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { AlertDirection, AlertDto, CreateAlertDto } from '../../models';
+import { AlertDirection, AlertDto, CreateAlertDto, UpdateAlertDto } from '../../models';
 
 @Component({
   selector: 'app-alerts',
@@ -24,9 +24,16 @@ export class AlertsComponent implements OnInit {
   alerts = signal<AlertDto[]>([]);
   submitting = signal(false);
   addModalOpen = signal(false);
+  editModalOpen = signal(false);
+  editingAlertId = signal<string | null>(null);
 
   form = {
     symbol: signal(''),
+    targetPrice: signal(''),
+    direction: signal<AlertDirection>(AlertDirection.Above)
+  };
+
+  editForm = {
     targetPrice: signal(''),
     direction: signal<AlertDirection>(AlertDirection.Above)
   };
@@ -56,6 +63,20 @@ export class AlertsComponent implements OnInit {
     this.form.direction.set(AlertDirection.Above);
   }
 
+  openEditModal(alert: AlertDto): void {
+    this.editingAlertId.set(alert.id);
+    this.editForm.targetPrice.set(alert.targetPrice.toString());
+    this.editForm.direction.set(alert.direction);
+    this.editModalOpen.set(true);
+  }
+
+  closeEditModal(): void {
+    this.editModalOpen.set(false);
+    this.editingAlertId.set(null);
+    this.editForm.targetPrice.set('');
+    this.editForm.direction.set(AlertDirection.Above);
+  }
+
   submitAdd(): void {
     const price = parseFloat(this.form.targetPrice());
     if (!this.form.symbol() || isNaN(price)) {
@@ -77,6 +98,44 @@ export class AlertsComponent implements OnInit {
       },
       error: e => {
         this.toastService.error(e.error?.message ?? 'Failed to create alert');
+        this.submitting.set(false);
+      }
+    });
+  }
+
+  submitEdit(): void {
+    const alertId = this.editingAlertId();
+    const price = this.editForm.targetPrice() ? parseFloat(this.editForm.targetPrice()) : undefined;
+
+    if (alertId === null) {
+      this.toastService.error('Alert ID not found');
+      return;
+    }
+
+    if (price !== undefined && isNaN(price)) {
+      this.toastService.error('Target price must be a valid number');
+      return;
+    }
+
+    const dto: UpdateAlertDto = {
+      targetPrice: price,
+      direction: this.editForm.direction()
+    };
+
+    this.submitting.set(true);
+    this.alertService.updateAlert(alertId, dto).subscribe({
+      next: () => {
+        this.toastService.success('Alert updated');
+        this.closeEditModal();
+        this.load();
+        this.submitting.set(false);
+      },
+      error: e => {
+        if (e.status === 409) {
+          this.toastService.error('Cannot update triggered alert');
+        } else {
+          this.toastService.error(e.error?.message ?? 'Failed to update alert');
+        }
         this.submitting.set(false);
       }
     });
