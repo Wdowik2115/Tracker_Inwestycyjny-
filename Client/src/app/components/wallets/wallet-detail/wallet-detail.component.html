@@ -1,53 +1,156 @@
 <div class="page">
-  <div class="page-header">
-    <div class="header-with-back">
-      <a routerLink="/wallets" class="btn-back">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </a>
-      <h1 class="page-title">{{ wallet()?.name }}</h1>
-    </div>
-    <div class="header-actions">
-      <button class="btn-primary" [routerLink]="['/transactions']" [queryParams]="{ walletId: wallet()?.id, add: true }">Add Transaction</button>
-    </div>
-  </div>
 
   @if (loading()) {
-    <div class="center">
+    <div class="center-spinner">
       <app-loading-spinner size="md" />
     </div>
   } @else if (wallet()) {
-    <div class="wallet-overview-cards">
-      <div class="summary-card">
-        <div class="label">Total Value</div>
-        <div class="value">{{ formatCurrency(wallet()!.totalValue) }}</div>
-      </div>
-      @if (wallet()!.description) {
-        <div class="summary-card">
-          <div class="label">Description</div>
-          <div class="value-desc">{{ wallet()!.description }}</div>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a routerLink="/dashboard">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <span>{{ wallet()!.name }}</span>
+    </nav>
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="header-left">
+        <div class="header-title-row">
+          <h1 class="page-title">{{ wallet()!.name }}</h1>
         </div>
-      }
+        @if (wallet()!.description) {
+          <p class="header-subtitle">{{ wallet()!.description }}</p>
+        }
+      </div>
+      <div class="header-actions">
+        <button class="btn-danger" (click)="deleteWallet()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+          Delete
+        </button>
+      </div>
     </div>
 
-    <div class="section">
-      <h2 class="section-title">Assets</h2>
-      @if (wallet()!.assets.length === 0) {
-        <div class="empty-state">
-          <p>No assets in this wallet yet.</p>
+    <!-- Stats row -->
+    <div class="stats-row" [class.has-realized]="wallet()!.realizedPnl !== 0">
+      <div class="stat-card">
+        <div class="stat-label">CURRENT VALUE</div>
+        <div class="stat-value">{{ formatCurrency(wallet()!.totalValue) }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">UNREALIZED P&amp;L</div>
+        <div class="stat-value" [class.text-success]="wallet()!.pnl >= 0" [class.text-danger]="wallet()!.pnl < 0">
+          {{ formatCurrency(wallet()!.pnl) }}
+          <span class="stat-percent">({{ formatPercent(wallet()!.pnlPercent) }})</span>
         </div>
+      </div>
+      @if (wallet()!.realizedPnl !== 0) {
+        <div class="stat-card">
+          <div class="stat-label">REALIZED P&amp;L</div>
+          <div class="stat-value" [class.text-success]="wallet()!.realizedPnl >= 0" [class.text-danger]="wallet()!.realizedPnl < 0">
+            {{ formatCurrency(wallet()!.realizedPnl) }}
+          </div>
+        </div>
+      }
+      <div class="stat-card">
+        <div class="stat-label">TOTAL INVESTED</div>
+        <div class="stat-value">{{ formatCurrency(totalInvested()) }}</div>
+      </div>
+    </div>
+
+    <!-- Analytics grid -->
+    <div class="analytics-grid">
+
+      <!-- Asset Allocation donut -->
+      <div class="analytics-card">
+        <div class="analytics-card-header">
+          <span class="analytics-card-title">ASSET ALLOCATION</span>
+          <span class="analytics-card-total">{{ formatCurrency(wallet()!.totalValue) }}</span>
+        </div>
+        @if (wallet()!.assets.length > 0) {
+          <apx-chart
+            [series]="allocationSeries()"
+            [chart]="donutChart"
+            [labels]="allocationLabels()"
+            [dataLabels]="donutDataLabels"
+            [legend]="donutLegend"
+            [plotOptions]="donutPlotOptions"
+            [theme]="donutTheme"
+            [colors]="wallet()!.assets.map(a => getAssetColor(a.symbol))"
+          />
+          <div class="allocation-legend">
+            @for (asset of wallet()!.assets; track asset.symbol) {
+              <div class="legend-item">
+                <span class="legend-dot" [style.background]="getAssetColor(asset.symbol)"></span>
+                <span class="legend-symbol">{{ asset.symbol }}</span>
+                <span class="legend-name">{{ asset.name }}</span>
+                <span class="legend-value">{{ formatCurrency(asset.value) }}</span>
+                <span class="legend-pct">{{ getAssetPercentage(asset.value) }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-chart">No assets to display</div>
+        }
+      </div>
+
+      <!-- Portfolio Value area chart -->
+      <div class="analytics-card">
+        <div class="analytics-card-header">
+          <span class="analytics-card-title">PORTFOLIO VALUE</span>
+          <div class="period-tabs">
+            @for (p of periods; track p.label) {
+              <button
+                class="period-tab"
+                [class.active]="selectedPeriod() === p.days && p.label !== 'ALL' || (p.label === 'ALL' && selectedPeriod() === 365 && periods.indexOf(p) === 5)"
+                (click)="changePeriod(p.days)"
+              >{{ p.label }}</button>
+            }
+          </div>
+        </div>
+        @if (historyLoading()) {
+          <div class="chart-loading"><app-loading-spinner size="sm" /></div>
+        } @else if (historySeries().length > 0) {
+          <apx-chart
+            [series]="[{ name: 'Portfolio Value', data: historySeries() }]"
+            [chart]="areaChart"
+            [stroke]="areaStroke"
+            [fill]="areaFill"
+            [xaxis]="areaXAxis"
+            [yaxis]="areaYAxis"
+            [grid]="areaGrid"
+            [tooltip]="areaTooltip"
+            [dataLabels]="areaDataLabels"
+            [theme]="areaTheme"
+            [colors]="[wallet()!.pnl >= 0 ? '#26a17b' : '#e74c3c']"
+          />
+        } @else {
+          <div class="empty-chart">No history data available</div>
+        }
+      </div>
+
+    </div>
+
+    <!-- Positions -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Positions <span class="section-count">/ {{ wallet()!.assets.length }}</span></h2>
+      </div>
+      @if (wallet()!.assets.length === 0) {
+        <div class="empty-state">No positions yet. Add a transaction to get started.</div>
       } @else {
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Asset</th>
-                <th>Balance</th>
-                <th>Avg. Cost</th>
-                <th>Price</th>
-                <th>Value</th>
-                <th>P&L</th>
+                <th>ASSET</th>
+                <th>QUANTITY</th>
+                <th>AVG BUY PRICE</th>
+                <th>CURRENT PRICE</th>
+                <th>CURRENT VALUE</th>
+                <th>UNREALIZED P&amp;L</th>
               </tr>
             </thead>
             <tbody>
@@ -55,17 +158,25 @@
                 <tr>
                   <td>
                     <div class="asset-cell">
-                      <span class="asset-symbol">{{ asset.symbol }}</span>
+                      <div class="asset-icon" [style.background]="getAssetColor(asset.symbol)">
+                        {{ asset.symbol.slice(0, 3) }}
+                      </div>
+                      <div class="asset-info">
+                        <span class="asset-symbol">{{ asset.symbol }}</span>
+                        @if (asset.name) {
+                          <span class="asset-name">{{ asset.name }}</span>
+                        }
+                      </div>
                     </div>
                   </td>
-                  <td>{{ asset.quantity }}</td>
+                  <td>{{ formatQuantity(asset.quantity) }}</td>
                   <td>{{ formatCurrency(asset.avgCostBasis) }}</td>
                   <td>{{ formatCurrency(asset.currentPrice) }}</td>
-                  <td>{{ formatCurrency(asset.valueUsdt) }}</td>
+                  <td>{{ formatCurrency(asset.value) }}</td>
                   <td>
-                    <div class="pnl-cell" [class.negative]="asset.pnlUsdt < 0" [class.positive]="asset.pnlUsdt > 0">
-                      <div>{{ formatCurrency(asset.pnlUsdt) }}</div>
-                      <div class="pnl-percent">{{ formatPercent(asset.pnlPercent) }}</div>
+                    <div class="pnl-cell" [class.text-success]="asset.pnl >= 0" [class.text-danger]="asset.pnl < 0">
+                      <span>{{ formatCurrency(asset.pnl) }}</span>
+                      <span class="pnl-pct">({{ formatPercent(asset.pnlPercent) }})</span>
                     </div>
                   </td>
                 </tr>
@@ -75,5 +186,70 @@
         </div>
       }
     </div>
+
+    <!-- Transactions -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Transactions <span class="section-count">/ {{ transactions().length }}</span></h2>
+        <a class="btn-primary" [routerLink]="['/transactions']" [queryParams]="{ walletId: wallet()!.id, add: true }">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Add Transaction
+        </a>
+      </div>
+      @if (transactions().length === 0) {
+        <div class="empty-state">No transactions yet.</div>
+      } @else {
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>TYPE</th>
+                <th>ASSET</th>
+                <th>QUANTITY</th>
+                <th>PRICE PER UNIT</th>
+                <th>TOTAL</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tx of transactions(); track tx.id) {
+                <tr>
+                  <td class="td-date">{{ formatDate(tx.executedAt) }}</td>
+                  <td>
+                    <span class="type-badge" [class.buy]="tx.type === 'Buy'" [class.sell]="tx.type === 'Sell'">
+                      {{ tx.type.toUpperCase() }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="asset-cell">
+                      <div class="asset-icon asset-icon-sm" [style.background]="getAssetColor(tx.symbol)">
+                        {{ tx.symbol.slice(0, 3) }}
+                      </div>
+                      <div class="asset-info">
+                        <span class="asset-symbol">{{ tx.symbol }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ formatQuantity(tx.quantity) }}</td>
+                  <td>{{ formatCurrency(tx.priceAtTime) }}</td>
+                  <td>{{ formatCurrency(tx.totalValue) }}</td>
+                  <td>
+                    <button class="btn-delete-tx" (click)="deleteTransaction(tx.id)" title="Delete transaction">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
   }
 </div>

@@ -2,12 +2,17 @@
   <app-sidebar [class.open]="sidebarOpen()" />
 
   <main class="main-content">
-    <button class="hamburger" (click)="toggleSidebar()" aria-label="Toggle sidebar">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-      </svg>
-    </button>
-    <router-outlet />
+    <div class="sticky-header">
+      <button class="hamburger" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
+      <app-portfolio-header />
+    </div>
+    <div class="page-content">
+      <router-outlet />
+    </div>
   </main>
 
   <app-nav-rail />

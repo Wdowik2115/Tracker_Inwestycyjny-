@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Serwer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260519173652_AddUserProfileFields")]
-    partial class AddUserProfileFields
+    [Migration("20260519221011_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,6 +101,34 @@ namespace Serwer.Migrations
                     b.ToTable("PriceAlerts");
                 });
 
+            modelBuilder.Entity("Investe.Domain.Entities.PriceHistoryCache", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoinId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PriceUsd")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoinId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("PriceHistoryCache");
+                });
+
             modelBuilder.Entity("Investe.Domain.Entities.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -120,6 +148,14 @@ namespace Serwer.Migrations
 
                     b.Property<DateTime>("ExecutedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Fee")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<string>("FeeCurrency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
                         .IsRequired()

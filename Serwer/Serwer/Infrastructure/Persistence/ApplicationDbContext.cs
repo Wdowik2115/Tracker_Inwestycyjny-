@@ -14,6 +14,7 @@ namespace Investe.Infrastructure.Persistence
         public DbSet<Asset> Assets { get; set; } = null!;
         public DbSet<Transaction> Transactions { get; set; } = null!;
         public DbSet<PriceAlert> PriceAlerts { get; set; } = null!;
+        public DbSet<PriceHistoryCache> PriceHistoryCache { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -77,6 +78,15 @@ namespace Investe.Infrastructure.Persistence
                     .WithMany(u => u.PriceAlerts)
                     .HasForeignKey(p => p.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // PriceHistoryCache
+            modelBuilder.Entity<PriceHistoryCache>(e =>
+            {
+                e.HasKey(p => p.Id);
+                e.Property(p => p.Id).ValueGeneratedOnAdd();
+                e.HasIndex(p => new { p.CoinId, p.Date }).IsUnique();
+                e.Property(p => p.PriceUsd).HasPrecision(18, 8);
             });
         }
     }

@@ -43,10 +43,10 @@ namespace Investe.Application.Services
                 var avgCost = totalQty > 0 ? weightedCost / totalQty : 0m;
 
                 var currentPrice = await _priceService.GetCurrentPriceAsync(group.Key);
-                var valueUsdt = totalQty * currentPrice;
+                var value = totalQty * currentPrice;
                 var costBasis = totalQty * avgCost;
-                var pnlUsdt = valueUsdt - costBasis;
-                var pnlPercent = costBasis > 0 ? pnlUsdt / costBasis * 100m : 0m;
+                var pnl = value - costBasis;
+                var pnlPercent = costBasis > 0 ? pnl / costBasis * 100m : 0m;
 
                 positions.Add(new PositionDto
                 {
@@ -54,8 +54,8 @@ namespace Investe.Application.Services
                     Quantity = totalQty,
                     AvgCostBasis = avgCost,
                     CurrentPrice = currentPrice,
-                    ValueUsdt = valueUsdt,
-                    PnlUsdt = pnlUsdt,
+                    Value = value,
+                    Pnl = pnl,
                     PnlPercent = pnlPercent
                 });
             }
@@ -63,8 +63,9 @@ namespace Investe.Application.Services
             var summary = new PortfolioSummaryDto
             {
                 Positions = positions,
-                TotalValueUsdt = positions.Sum(p => p.ValueUsdt),
-                TotalPnlUsdt = positions.Sum(p => p.PnlUsdt)
+                TotalValue = positions.Sum(p => p.Value),
+                TotalPnl = positions.Sum(p => p.Pnl),
+                TotalInvested = positions.Sum(p => p.Quantity * p.AvgCostBasis)
             };
 
             _logger.LogInformation("Portfolio summary built for user {UserId}: {Count} positions", userId, positions.Count);

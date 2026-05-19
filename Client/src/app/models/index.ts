@@ -43,10 +43,13 @@ export interface WalletDto {
   description: string;
   totalValue: number;
   assetCount: number;
+  pnl: number;
+  pnlPercent: number;
 }
 
 export interface WalletDetailsDto extends WalletDto {
   assets: PositionDto[];
+  realizedPnl: number;
 }
 
 export interface CreateWalletDto {
@@ -105,18 +108,31 @@ export interface TransactionUpdateDto {
 // Portfolio models
 export interface PositionDto {
   symbol: string;
+  name: string;
   quantity: number;
   avgCostBasis: number;
   currentPrice: number;
-  valueUsdt: number;
-  pnlUsdt: number;
+  value: number;
+  pnl: number;
   pnlPercent: number;
 }
 
 export interface PortfolioSummaryDto {
   positions: PositionDto[];
-  totalValueUsdt: number;
-  totalPnlUsdt: number;
+  totalValue: number;
+  totalPnl: number;
+  totalInvested: number;
+}
+
+// History models
+export interface HistoryPoint {
+  date: string;   // ISO date string from backend
+  value: number;
+}
+
+export interface WalletHistoryDto {
+  walletId: string;
+  points: HistoryPoint[];
 }
 
 // Alert models

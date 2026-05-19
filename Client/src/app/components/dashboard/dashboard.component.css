@@ -1,61 +1,14 @@
 .page {
-  max-width: 1200px;
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
 
-/* Summary card */
-.summary-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-}
-
-.summary-loading {
+/* ── Section header ────────────────────────────────────────── */
+.section-header {
   display: flex;
-  justify-content: center;
-  padding: 32px 0;
-}
-
-.summary-top {
-  margin-bottom: 20px;
-}
-
-.summary-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-.summary-value {
-  display: block;
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.1;
-  margin-bottom: 8px;
-}
-
-.summary-pnl {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.chart-wrapper {
-  margin: 0 -8px;
-}
-
-/* Positions */
-.positions-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .section-title {
@@ -64,70 +17,141 @@
   color: var(--text-primary);
 }
 
+.section-count {
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.btn-new {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--accent);
+  border-radius: 8px;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.btn-new:hover {
+  opacity: 0.85;
+}
+
+/* ── Wallet grid ───────────────────────────────────────────── */
+.wallets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.wallet-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.wallet-card:hover {
+  border-color: #2a3a58;
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.card-source {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.card-view {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.card-view:hover {
+  text-decoration: underline;
+}
+
+.card-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-top: 8px;
+}
+
+.card-pnl {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.card-pnl-pct {
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.card-chart {
+  margin: 0 -20px;
+}
+
+.card-chart-placeholder {
+  height: 64px;
+  margin: 12px -20px 0;
+  background: var(--bg-surface);
+}
+
+/* ── Utilities ─────────────────────────────────────────────── */
+.text-success { color: var(--success); }
+.text-danger  { color: var(--danger); }
+
 .empty-state {
   text-align: center;
   padding: 48px 0;
   color: var(--text-secondary);
 }
 
-.table-wrapper {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+.empty-state a {
+  color: var(--accent);
+  text-decoration: none;
 }
 
-.positions-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+.empty-state a:hover {
+  text-decoration: underline;
 }
 
-.positions-table th {
-  padding: 11px 16px;
-  text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--text-secondary);
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
+@media (max-width: 640px) {
+  .wallets-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.positions-table td {
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-primary);
-}
-
-.positions-table tr:last-child td {
-  border-bottom: none;
-}
-
-.positions-table tbody tr {
-  background: var(--bg-card);
-  transition: background 0.12s;
-}
-
-.positions-table tbody tr:hover {
-  background: #1e2a40;
-}
-
-.positions-table tbody tr.row-profit {
-  border-left: 3px solid var(--success);
-}
-
-.positions-table tbody tr.row-loss {
-  border-left: 3px solid var(--danger);
-}
-
-.asset-cell {
-  font-weight: 700;
-  font-size: 14px;
-}
-
-/* Skeleton rows */
-.positions-table td .skeleton {
-  display: inline-block;
-}

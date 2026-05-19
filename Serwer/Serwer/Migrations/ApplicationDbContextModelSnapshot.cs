@@ -98,6 +98,34 @@ namespace Serwer.Migrations
                     b.ToTable("PriceAlerts");
                 });
 
+            modelBuilder.Entity("Investe.Domain.Entities.PriceHistoryCache", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoinId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PriceUsd")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoinId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("PriceHistoryCache");
+                });
+
             modelBuilder.Entity("Investe.Domain.Entities.Transaction", b =>
                 {
                     b.Property<Guid>("Id")

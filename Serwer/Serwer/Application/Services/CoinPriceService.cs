@@ -1,5 +1,8 @@
 using System.Text.Json;
+using Investe.Application.DTOs;
 using Investe.Application.Interfaces.Services;
+using Investe.Domain.Entities;
+using Investe.Infrastructure.Persistence.UnitOfWork;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -25,13 +28,20 @@ namespace Investe.Application.Services
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IMemoryCache _cache;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<CoinPriceService> _logger;
         private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan TodayHistoryTtl = TimeSpan.FromHours(4);
 
-        public CoinPriceService(IHttpClientFactory httpClientFactory, IMemoryCache cache, ILogger<CoinPriceService> logger)
+        public CoinPriceService(
+            IHttpClientFactory httpClientFactory,
+            IMemoryCache cache,
+            IUnitOfWork unitOfWork,
+            ILogger<CoinPriceService> logger)
         {
             _httpClientFactory = httpClientFactory;
             _cache = cache;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -76,7 +86,6 @@ namespace Investe.Application.Services
             var result = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
             var symbolList = symbols.Select(s => s.ToUpperInvariant()).Distinct().ToList();
 
-            // Separate symbols that are already cached from those that need an API call
             var uncachedIds = new List<(string symbol, string coinId)>();
             foreach (var symbol in symbolList)
             {
@@ -161,6 +170,87 @@ namespace Investe.Application.Services
                 _logger.LogError(ex, "Failed to fetch historical price for {Symbol} on {Date}", symbol, date);
                 return 0m;
             }
+        }
+
+        /// <summary>
+        /// Returns daily USD prices for the last <paramref name="days"/> days from DB cache.
+        /// Fetches from CoinGecko when data is missing or today's entry is older than 4 hours.
+        /// </summary>
+        public async Task<List<HistoryPointDto>> GetPriceHistoryAsync(string symbol, int days)
+        {
+            if (!SymbolToId.TryGetValue(symbol.ToUpperInvariant(), out var coinId))
+            {
+                _logger.LogWarning("Unknown symbol {Symbol} — no CoinGecko mapping", symbol);
+                return new List<HistoryPointDto>();
+            }
+
+            var today = DateTime.UtcNow.Date;
+            var from = today.AddDays(-(days - 1));
+
+            var cached = await _unitOfWork.PriceHistory.GetByCoinAndDateRangeAsync(coinId, from, today);
+
+            // Check completeness: all expected past dates present + today fresh
+            var cachedDateSet = cached.Select(c => c.Date.Date).ToHashSet();
+            var allPastDatesPresent = Enumerable.Range(0, days - 1)
+                .Select(i => from.AddDays(i))
+                .All(d => cachedDateSet.Contains(d));
+
+            var todayEntry = cached.FirstOrDefault(c => c.Date.Date == today);
+            var todayIsFresh = todayEntry != null && (DateTime.UtcNow - todayEntry.FetchedAt) < TodayHistoryTtl;
+
+            if (!allPastDatesPresent || !todayIsFresh)
+            {
+                try
+                {
+                    var client = _httpClientFactory.CreateClient("CoinGecko");
+                    var response = await client.GetStringAsync(
+                        $"coins/{coinId}/market_chart?vs_currency=usd&days={days}&interval=daily");
+
+                    using var doc = JsonDocument.Parse(response);
+                    var fetchedAt = DateTime.UtcNow;
+
+                    foreach (var point in doc.RootElement.GetProperty("prices").EnumerateArray())
+                    {
+                        var timestampMs = point[0].GetInt64();
+                        var price = point[1].GetDecimal();
+                        var date = DateTimeOffset.FromUnixTimeMilliseconds(timestampMs).UtcDateTime.Date;
+
+                        if (date < from || date > today) continue;
+
+                        var existing = cached.FirstOrDefault(c => c.Date.Date == date);
+                        if (existing != null)
+                        {
+                            existing.PriceUsd = price;
+                            existing.FetchedAt = fetchedAt;
+                        }
+                        else
+                        {
+                            var entry = new PriceHistoryCache
+                            {
+                                CoinId = coinId,
+                                Date = date,
+                                PriceUsd = price,
+                                FetchedAt = fetchedAt
+                            };
+                            await _unitOfWork.PriceHistory.AddAsync(entry);
+                            cached.Add(entry);
+                        }
+                    }
+
+                    await _unitOfWork.CompleteAsync();
+
+                    _logger.LogInformation("Fetched {Days}-day price history for {Symbol} from CoinGecko", days, symbol);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to fetch price history for {Symbol}", symbol);
+                }
+            }
+
+            return cached
+                .Select(c => new HistoryPointDto { Date = c.Date, Value = c.PriceUsd })
+                .OrderBy(p => p.Date)
+                .ToList();
         }
     }
 }
