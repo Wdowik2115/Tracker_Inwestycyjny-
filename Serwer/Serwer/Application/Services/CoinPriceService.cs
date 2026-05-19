@@ -70,6 +70,67 @@ namespace Investe.Application.Services
             }
         }
 
+        /// <summary>Returns current USD prices for multiple symbols in a single CoinGecko API call.</summary>
+        public async Task<Dictionary<string, decimal>> GetCurrentPricesAsync(IEnumerable<string> symbols)
+        {
+            var result = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            var symbolList = symbols.Select(s => s.ToUpperInvariant()).Distinct().ToList();
+
+            // Separate symbols that are already cached from those that need an API call
+            var uncachedIds = new List<(string symbol, string coinId)>();
+            foreach (var symbol in symbolList)
+            {
+                var cacheKey = $"price:{symbol}";
+                if (_cache.TryGetValue(cacheKey, out decimal cached))
+                {
+                    result[symbol] = cached;
+                }
+                else if (SymbolToId.TryGetValue(symbol, out var coinId))
+                {
+                    uncachedIds.Add((symbol, coinId));
+                }
+                else
+                {
+                    _logger.LogWarning("Unknown symbol {Symbol} — no CoinGecko mapping", symbol);
+                    result[symbol] = 0m;
+                }
+            }
+
+            if (uncachedIds.Count == 0)
+                return result;
+
+            try
+            {
+                var ids = string.Join(",", uncachedIds.Select(x => x.coinId));
+                var client = _httpClientFactory.CreateClient("CoinGecko");
+                var response = await client.GetStringAsync($"simple/price?ids={ids}&vs_currencies=usd");
+
+                using var doc = JsonDocument.Parse(response);
+                foreach (var (symbol, coinId) in uncachedIds)
+                {
+                    if (doc.RootElement.TryGetProperty(coinId, out var coinEl) &&
+                        coinEl.TryGetProperty("usd", out var usdEl))
+                    {
+                        var price = usdEl.GetDecimal();
+                        _cache.Set($"price:{symbol}", price, CacheTtl);
+                        result[symbol] = price;
+                    }
+                    else
+                    {
+                        result[symbol] = 0m;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch batch prices for {Symbols}", string.Join(",", uncachedIds.Select(x => x.symbol)));
+                foreach (var (symbol, _) in uncachedIds)
+                    result.TryAdd(symbol, 0m);
+            }
+
+            return result;
+        }
+
         /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>
         public async Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date)
         {

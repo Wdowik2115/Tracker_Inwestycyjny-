@@ -5,7 +5,7 @@ import { WalletService } from '../../services/wallet.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { CreateWalletDto, WalletDto } from '../../models';
+import { CreateWalletDto, UpdateWalletDto, WalletDto } from '../../models';
 
 function truncateAddress(addr: string): string {
   if (!addr || addr.length <= 12) return addr;
@@ -28,9 +28,16 @@ export class WalletsComponent implements OnInit {
   loading = signal(true);
   wallets = signal<WalletDto[]>([]);
   addModalOpen = signal(false);
+  editModalOpen = signal(false);
+  editingWalletId = signal<string | null>(null);
   submitting = signal(false);
 
   form = {
+    name: signal(''),
+    description: signal('')
+  };
+
+  editForm = {
     name: signal(''),
     description: signal('')
   };
@@ -54,6 +61,47 @@ export class WalletsComponent implements OnInit {
     this.addModalOpen.set(false);
     this.form.name.set('');
     this.form.description.set('');
+  }
+
+  openEditModal(wallet: WalletDto): void {
+    this.editingWalletId.set(wallet.id);
+    this.editForm.name.set(wallet.name);
+    this.editForm.description.set(wallet.description);
+    this.editModalOpen.set(true);
+  }
+
+  closeEditModal(): void {
+    this.editModalOpen.set(false);
+    this.editingWalletId.set(null);
+    this.editForm.name.set('');
+    this.editForm.description.set('');
+  }
+
+  submitEdit(): void {
+    if (!this.editForm.name().trim()) {
+      this.toastService.error('Wallet name is required');
+      return;
+    }
+    const id = this.editingWalletId();
+    if (!id) return;
+
+    const dto: UpdateWalletDto = {
+      name: this.editForm.name().trim(),
+      description: this.editForm.description().trim() || undefined
+    };
+    this.submitting.set(true);
+    this.walletService.updateWallet(id, dto).subscribe({
+      next: () => {
+        this.toastService.success('Wallet updated');
+        this.closeEditModal();
+        this.load();
+        this.submitting.set(false);
+      },
+      error: e => {
+        this.toastService.error(e.error?.message ?? 'Failed to update wallet');
+        this.submitting.set(false);
+      }
+    });
   }
 
   submitAdd(): void {
@@ -81,7 +129,11 @@ export class WalletsComponent implements OnInit {
   }
 
   deleteWallet(id: string): void {
-    if (!confirm('Delete this wallet? This cannot be undone.')) return;
+    const wallet = this.wallets().find(w => w.id === id);
+    const assetInfo = wallet && wallet.assetCount > 0
+      ? ` It contains ${wallet.assetCount} asset${wallet.assetCount === 1 ? '' : 's'} and all transaction history will be permanently lost.`
+      : '';
+    if (!confirm(`Delete wallet "${wallet?.name}"?${assetInfo} This cannot be undone.`)) return;
     this.walletService.deleteWallet(id).subscribe({
       next: () => { this.toastService.success('Wallet deleted'); this.load(); },
       error: e => this.toastService.error(e.error?.message ?? 'Failed to delete wallet')

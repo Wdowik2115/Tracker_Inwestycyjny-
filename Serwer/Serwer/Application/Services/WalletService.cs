@@ -41,31 +41,33 @@ namespace Investe.Application.Services
         public async Task<IEnumerable<WalletDto>> GetUserWalletsAsync(Guid userId)
         {
             var wallets = await _unitOfWork.Wallets.GetWalletsByUserIdAsync(userId);
-            var result = new List<WalletDto>();
+            var walletList = wallets.ToList();
 
-            foreach (var wallet in wallets)
+            // Collect all unique symbols across all wallets for a single batch price fetch
+            var allAssets = new List<(Guid walletId, Domain.Entities.Asset asset)>();
+            foreach (var wallet in walletList)
             {
-                var dto = new WalletDto
+                var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(wallet.Id);
+                allAssets.AddRange(assets.Select(a => (wallet.Id, a)));
+            }
+
+            var symbols = allAssets.Select(x => x.asset.Symbol).Distinct();
+            var prices = await _priceService.GetCurrentPricesAsync(symbols);
+
+            return walletList.Select(wallet =>
+            {
+                var walletAssets = allAssets.Where(x => x.walletId == wallet.Id).ToList();
+                var totalValue = walletAssets.Sum(x => x.asset.Quantity * prices.GetValueOrDefault(x.asset.Symbol, 0m));
+
+                return new WalletDto
                 {
                     Id = wallet.Id,
                     Name = wallet.Name,
-                    Description = wallet.Description
+                    Description = wallet.Description,
+                    TotalValue = totalValue,
+                    AssetCount = walletAssets.Count
                 };
-
-                var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(wallet.Id);
-                
-                decimal totalValue = 0;
-                foreach (var asset in assets)
-                {
-                    var price = await _priceService.GetCurrentPriceAsync(asset.Symbol);
-                    totalValue += asset.Quantity * price;
-                }
-                
-                dto.TotalValue = totalValue;
-                result.Add(dto);
-            }
-
-            return result;
+            });
         }
 
         /// <summary>Returns detailed information about a specific wallet, including assets and P&L.</summary>
@@ -77,13 +79,15 @@ namespace Investe.Application.Services
             if (wallet.UserId != userId)
                 throw new UnauthorizedAccessException("Wallet does not belong to this user.");
 
-            var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(walletId);
+            var assets = (await _unitOfWork.Assets.GetAssetsByWalletIdAsync(walletId)).ToList();
+            var prices = await _priceService.GetCurrentPricesAsync(assets.Select(a => a.Symbol));
+
             var positions = new List<PositionDto>();
             decimal totalValue = 0;
 
             foreach (var asset in assets)
             {
-                var currentPrice = await _priceService.GetCurrentPriceAsync(asset.Symbol);
+                var currentPrice = prices.GetValueOrDefault(asset.Symbol, 0m);
                 var valueUsdt = asset.Quantity * currentPrice;
                 var costBasis = asset.Quantity * asset.AverageBuyPrice;
                 var pnlUsdt = valueUsdt - costBasis;
@@ -111,6 +115,25 @@ namespace Investe.Application.Services
                 TotalValue = totalValue,
                 Assets = positions
             };
+        }
+
+        /// <summary>Updates the name and description of a wallet owned by the user.</summary>
+        public async Task<WalletDto> UpdateWalletAsync(Guid userId, Guid walletId, UpdateWalletDto dto)
+        {
+            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+                ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
+
+            if (wallet.UserId != userId)
+                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+
+            wallet.Name = dto.Name;
+            wallet.Description = dto.Description ?? string.Empty;
+
+            await _unitOfWork.Wallets.UpdateAsync(wallet);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Wallet {WalletId} updated by user {UserId}", walletId, userId);
+            return wallet.ToDto();
         }
 
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>

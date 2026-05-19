@@ -39,6 +39,13 @@ namespace Serwer.Controllers
             return CreatedAtAction(nameof(GetWallets), new { }, wallet);
         }
 
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> UpdateWallet(Guid id, [FromBody] UpdateWalletDto dto)
+        {
+            var wallet = await _walletService.UpdateWalletAsync(User.GetUserId(), id, dto);
+            return Ok(wallet);
+        }
+
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteWallet(Guid id)
         {

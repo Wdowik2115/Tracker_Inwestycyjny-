@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { WalletDto, CreateWalletDto, WalletDetailsDto } from '../models';
+import { WalletDto, CreateWalletDto, UpdateWalletDto, WalletDetailsDto } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -22,6 +22,10 @@ export class WalletService {
 
   createWallet(dto: CreateWalletDto): Observable<WalletDto> {
     return this.http.post<WalletDto>(this.apiUrl, dto);
+  }
+
+  updateWallet(id: string, dto: UpdateWalletDto): Observable<WalletDto> {
+    return this.http.put<WalletDto>(`${this.apiUrl}/${id}`, dto);
   }
 
   deleteWallet(id: string): Observable<void> {

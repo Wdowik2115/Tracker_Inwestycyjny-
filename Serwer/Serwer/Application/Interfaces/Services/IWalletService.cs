@@ -13,6 +13,9 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Returns detailed information about a specific wallet, including assets.</summary>
         Task<WalletDetailsDto> GetWalletDetailsAsync(Guid userId, Guid walletId);
 
+        /// <summary>Updates the name and description of a wallet owned by the user.</summary>
+        Task<WalletDto> UpdateWalletAsync(Guid userId, Guid walletId, UpdateWalletDto dto);
+
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteWalletAsync(Guid userId, Guid walletId);
     }

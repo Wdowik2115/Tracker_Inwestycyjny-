@@ -21,6 +21,7 @@ export interface WalletDto {
   name: string;
   description: string;
   totalValue: number;
+  assetCount: number;
 }
 
 export interface WalletDetailsDto extends WalletDto {
@@ -28,6 +29,11 @@ export interface WalletDetailsDto extends WalletDto {
 }
 
 export interface CreateWalletDto {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateWalletDto {
   name: string;
   description?: string;
 }
