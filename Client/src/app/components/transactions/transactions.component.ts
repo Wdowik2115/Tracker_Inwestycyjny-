@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { TransactionService } from '../../services/transaction.service';
 import { WalletService } from '../../services/wallet.service';
 import { ToastService } from '../../services/toast.service';
@@ -20,6 +21,7 @@ export class TransactionsComponent implements OnInit {
   private walletService = inject(WalletService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
+  private route = inject(ActivatedRoute);
 
   loading = signal(true);
   transactions = signal<TransactionDto[]>([]);
@@ -79,6 +81,18 @@ export class TransactionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.titleService.setTitle('Transactions — Investee');
+    this.handleQueryParams();
+  }
+
+  private handleQueryParams(): void {
+    const walletId = this.route.snapshot.queryParamMap.get('walletId');
+    const add = this.route.snapshot.queryParamMap.get('add');
+    if (walletId) {
+      this.form.walletId.set(walletId);
+    }
+    if (add === 'true') {
+      this.openAddModal();
+    }
   }
 
   load(): void {
