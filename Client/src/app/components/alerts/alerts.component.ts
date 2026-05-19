@@ -1,10 +1,10 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, OnDestroy } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { AlertService } from '../../services/alert.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { AlertDirection, AlertDto, CreateAlertDto } from '../../models';
+import { AlertDirection, AlertDto, CreateAlertDto, UpdateAlertDto } from '../../models';
 
 @Component({
   selector: 'app-alerts',
@@ -13,7 +13,7 @@ import { AlertDirection, AlertDto, CreateAlertDto } from '../../models';
   templateUrl: './alerts.component.html',
   styleUrl: './alerts.component.css'
 })
-export class AlertsComponent implements OnInit {
+export class AlertsComponent implements OnInit, OnDestroy {
   private alertService = inject(AlertService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
@@ -24,6 +24,8 @@ export class AlertsComponent implements OnInit {
   alerts = signal<AlertDto[]>([]);
   submitting = signal(false);
   addModalOpen = signal(false);
+  editModalOpen = signal(false);
+  editingAlertId = signal<string | null>(null);
 
   form = {
     symbol: signal(''),
@@ -31,18 +33,92 @@ export class AlertsComponent implements OnInit {
     direction: signal<AlertDirection>(AlertDirection.Above)
   };
 
+  editForm = {
+    targetPrice: signal(''),
+    direction: signal<AlertDirection>(AlertDirection.Above)
+  };
+
   active = computed(() => this.alerts().filter(a => !a.isTriggered));
   triggered = computed(() => this.alerts().filter(a => a.isTriggered));
 
+  private pollInterval: any = null;
+  private previousTriggeredIds = new Set<string>();
+
   ngOnInit(): void {
     this.titleService.setTitle('Alerts — Investee');
+    this.requestNotificationPermission();
     this.load();
+    this.startPolling();
+  }
+
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
+  private requestNotificationPermission(): void {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+
+  private startPolling(): void {
+    const pollIntervalMs = 60000 + Math.random() * 30000;
+    this.pollInterval = setInterval(() => {
+      this.pollAlerts();
+    }, pollIntervalMs);
+  }
+
+  private stopPolling(): void {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+  }
+
+  private pollAlerts(): void {
+    this.alertService.getAlerts().subscribe({
+      next: (data) => {
+        const newAlerts = data;
+        const newTriggeredIds = new Set(newAlerts.filter(a => a.isTriggered).map(a => a.id));
+
+        newTriggeredIds.forEach(id => {
+          if (!this.previousTriggeredIds.has(id)) {
+            const alert = newAlerts.find(a => a.id === id);
+            if (alert) {
+              this.showNotification(alert);
+            }
+          }
+        });
+
+        this.previousTriggeredIds = newTriggeredIds;
+        this.alerts.set(newAlerts);
+      },
+      error: () => {}
+    });
+  }
+
+  private showNotification(alert: AlertDto): void {
+    const direction = alert.direction === AlertDirection.Above ? 'above' : 'below';
+    const message = `${alert.symbol} alert triggered - price ${direction} $${alert.targetPrice}`;
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Price Alert Triggered', {
+        body: message,
+        icon: '/assets/icon.png'
+      });
+    }
+
+    this.toastService.success(`Alert triggered: ${alert.symbol}`);
   }
 
   load(): void {
     this.loading.set(true);
     this.alertService.getAlerts().subscribe({
-      next: data => { this.alerts.set(data); this.loading.set(false); },
+      next: data => {
+        this.alerts.set(data);
+        this.previousTriggeredIds = new Set(data.filter(a => a.isTriggered).map(a => a.id));
+        this.loading.set(false);
+      },
       error: e => { this.toastService.error(e.error?.message ?? 'Failed to load alerts'); this.loading.set(false); }
     });
   }
@@ -54,6 +130,20 @@ export class AlertsComponent implements OnInit {
     this.form.symbol.set('');
     this.form.targetPrice.set('');
     this.form.direction.set(AlertDirection.Above);
+  }
+
+  openEditModal(alert: AlertDto): void {
+    this.editingAlertId.set(alert.id);
+    this.editForm.targetPrice.set(alert.targetPrice.toString());
+    this.editForm.direction.set(alert.direction);
+    this.editModalOpen.set(true);
+  }
+
+  closeEditModal(): void {
+    this.editModalOpen.set(false);
+    this.editingAlertId.set(null);
+    this.editForm.targetPrice.set('');
+    this.editForm.direction.set(AlertDirection.Above);
   }
 
   submitAdd(): void {
@@ -82,11 +172,56 @@ export class AlertsComponent implements OnInit {
     });
   }
 
+  submitEdit(): void {
+    const alertId = this.editingAlertId();
+    const price = this.editForm.targetPrice() ? parseFloat(this.editForm.targetPrice()) : undefined;
+
+    if (alertId === null) {
+      this.toastService.error('Alert ID not found');
+      return;
+    }
+
+    if (price !== undefined && isNaN(price)) {
+      this.toastService.error('Target price must be a valid number');
+      return;
+    }
+
+    const dto: UpdateAlertDto = {
+      targetPrice: price,
+      direction: this.editForm.direction()
+    };
+
+    this.submitting.set(true);
+    this.alertService.updateAlert(alertId, dto).subscribe({
+      next: () => {
+        this.toastService.success('Alert updated');
+        this.closeEditModal();
+        this.load();
+        this.submitting.set(false);
+      },
+      error: e => {
+        if (e.status === 409) {
+          this.toastService.error('Cannot update triggered alert');
+        } else {
+          this.toastService.error(e.error?.message ?? 'Failed to update alert');
+        }
+        this.submitting.set(false);
+      }
+    });
+  }
+
   deleteAlert(id: string): void {
     if (!confirm('Delete this alert?')) return;
     this.alertService.deleteAlert(id).subscribe({
       next: () => { this.toastService.success('Alert deleted'); this.load(); },
       error: e => this.toastService.error(e.error?.message ?? 'Failed to delete alert')
+    });
+  }
+
+  resetAlert(id: string): void {
+    this.alertService.resetAlert(id).subscribe({
+      next: () => { this.toastService.success('Alert reset'); this.load(); },
+      error: e => this.toastService.error(e.error?.message ?? 'Failed to reset alert')
     });
   }
 

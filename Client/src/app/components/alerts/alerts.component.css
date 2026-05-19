@@ -101,6 +101,32 @@
   font-size: 12px;
 }
 
+.alert-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.edit-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.edit-btn:hover {
+  background: rgba(52, 152, 219, 0.12);
+  color: var(--accent);
+}
+
 .delete-btn {
   display: flex;
   align-items: center;

@@ -51,6 +51,47 @@ namespace Investe.Application.Services
             return alerts.Select(a => a.ToDto());
         }
 
+        /// <summary>Gets a specific alert by ID. User must own the alert. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        public async Task<AlertDto> GetAlertByIdAsync(Guid userId, Guid alertId)
+        {
+            var alert = await _unitOfWork.PriceAlerts.GetByIdAsync(alertId)
+                ?? throw new KeyNotFoundException($"Alert {alertId} not found.");
+
+            if (alert.UserId != userId)
+                throw new UnauthorizedAccessException("Alert does not belong to this user.");
+
+            return alert.ToDto();
+        }
+
+        /// <summary>Updates an alert owned by the user. Cannot update triggered alerts. Throws KeyNotFoundException, UnauthorizedAccessException, or InvalidOperationException.</summary>
+        public async Task<AlertDto> UpdateAlertAsync(Guid userId, Guid alertId, UpdateAlertDto dto)
+        {
+            var alert = await _unitOfWork.PriceAlerts.GetByIdAsync(alertId)
+                ?? throw new KeyNotFoundException($"Alert {alertId} not found.");
+
+            if (alert.UserId != userId)
+                throw new UnauthorizedAccessException("Alert does not belong to this user.");
+
+            if (alert.IsTriggered)
+                throw new InvalidOperationException("Cannot update a triggered alert.");
+
+            if (dto.TargetPrice.HasValue)
+            {
+                if (dto.TargetPrice.Value <= 0.0001m)
+                    throw new ArgumentException("TargetPrice must be greater than 0.0001.");
+                alert.TargetPrice = dto.TargetPrice.Value;
+            }
+
+            if (dto.Direction.HasValue)
+                alert.Direction = dto.Direction.Value;
+
+            await _unitOfWork.PriceAlerts.UpdateAsync(alert);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Alert {AlertId} updated for user {UserId}", alert.Id, userId);
+            return alert.ToDto();
+        }
+
         /// <summary>Deletes an alert owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         public async Task DeleteAlertAsync(Guid userId, Guid alertId)
         {
@@ -62,6 +103,25 @@ namespace Investe.Application.Services
 
             await _unitOfWork.PriceAlerts.DeleteAsync(alert);
             await _unitOfWork.CompleteAsync();
+        }
+
+        /// <summary>Resets a triggered alert so it can be reused. Clears IsTriggered and TriggeredAt. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        public async Task<AlertDto> ResetAlertAsync(Guid userId, Guid alertId)
+        {
+            var alert = await _unitOfWork.PriceAlerts.GetByIdAsync(alertId)
+                ?? throw new KeyNotFoundException($"Alert {alertId} not found.");
+
+            if (alert.UserId != userId)
+                throw new UnauthorizedAccessException("Alert does not belong to this user.");
+
+            alert.IsTriggered = false;
+            alert.TriggeredAt = null;
+
+            await _unitOfWork.PriceAlerts.UpdateAsync(alert);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Alert {AlertId} reset for user {UserId}", alert.Id, userId);
+            return alert.ToDto();
         }
 
         /// <summary>Checks all active alerts against current prices and marks triggered ones.</summary>

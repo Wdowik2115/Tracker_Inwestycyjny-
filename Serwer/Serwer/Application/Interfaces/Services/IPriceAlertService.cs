@@ -10,8 +10,17 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Returns all price alerts for the user.</summary>
         Task<IEnumerable<AlertDto>> GetUserAlertsAsync(Guid userId);
 
+        /// <summary>Gets a specific alert by ID. User must own the alert. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        Task<AlertDto> GetAlertByIdAsync(Guid userId, Guid alertId);
+
+        /// <summary>Updates an alert owned by the user. Cannot update triggered alerts. Throws KeyNotFoundException, UnauthorizedAccessException, or InvalidOperationException.</summary>
+        Task<AlertDto> UpdateAlertAsync(Guid userId, Guid alertId, UpdateAlertDto dto);
+
         /// <summary>Deletes an alert owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteAlertAsync(Guid userId, Guid alertId);
+
+        /// <summary>Resets a triggered alert so it can be reused. Clears IsTriggered and TriggeredAt. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        Task<AlertDto> ResetAlertAsync(Guid userId, Guid alertId);
 
         /// <summary>Checks all active alerts against current prices and marks triggered ones.</summary>
         Task CheckAndTriggerAlertsAsync();
