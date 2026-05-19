@@ -9,11 +9,11 @@
 
 .auth-card {
   background: #0f1419;
-  border-radius: 16px;
-  padding: 40px;
-  max-width: 450px;
+  border-radius: 20px;
+  padding: 50px;
+  max-width: 500px;
   width: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
 }
 
 .logo-section {
@@ -25,51 +25,67 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.logo svg {
+  animation: logo-float 6s ease-in-out infinite, logo-spin 20s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(245, 166, 35, 0.5));
+}
+
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.1); }
+}
+
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .logo h1 {
   color: #ffffff;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   margin: 0;
+  letter-spacing: -1px;
 }
 
 .logo-section p {
   color: #8b92a6;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   margin: 0;
 }
 
 .auth-form h2 {
   color: #ffffff;
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 24px 0;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 30px 0;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .form-group label {
   display: block;
   color: #8b92a6;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 15px;
+  margin-bottom: 10px;
   font-weight: 500;
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: #1a1f2e;
   border: 1px solid #2a2f3e;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
   transition: all 0.3s ease;
   box-sizing: border-box;
 }
@@ -78,6 +94,7 @@
   outline: none;
   border-color: #F5A623;
   background: #1f2535;
+  box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.1);
 }
 
 .form-group input::placeholder {
@@ -86,22 +103,39 @@
 
 .btn-primary {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   background: #F5A623;
   color: #000000;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 8px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .btn-primary:hover:not(:disabled) {
   background: #e69500;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.4);
 }
 
 .btn-primary:disabled {
@@ -113,26 +147,75 @@
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 15px;
+  margin-bottom: 25px;
 }
 
 .auth-link {
   text-align: center;
-  margin-top: 24px;
+  margin-top: 30px;
   color: #8b92a6;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .auth-link a {
   color: #F5A623;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   transition: color 0.3s ease;
 }
 
 .auth-link a:hover {
   color: #e69500;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out 0.2s both;
+}
+
+.animate-text-glow {
+  animation: textGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes textGlow {
+  from { text-shadow: 0 0 5px rgba(245, 166, 35, 0); }
+  to { text-shadow: 0 0 20px rgba(245, 166, 35, 0.5); }
 }

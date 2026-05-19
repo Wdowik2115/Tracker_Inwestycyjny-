@@ -3,35 +3,71 @@
     <h1 class="page-title">Settings</h1>
   </div>
 
-  <!-- Account -->
+  @if (error()) {
+    <div class="alert alert-error">
+      {{ error() }}
+      <button class="alert-close" (click)="error.set(null)">&times;</button>
+    </div>
+  }
+
+  @if (success()) {
+    <div class="alert alert-success">
+      {{ success() }}
+      <button class="alert-close" (click)="success.set(null)">&times;</button>
+    </div>
+  }
+
+  <!-- Profile -->
   <section class="settings-section">
-    <h2 class="section-title">Account</h2>
+    <h2 class="section-title">Profile</h2>
     <div class="settings-card">
-      <div class="setting-row">
-        <span class="setting-label">Email</span>
-        <span class="setting-value">{{ authService.currentUser()?.email ?? '—' }}</span>
+      <div class="form-stack">
+        <div class="form-group">
+          <label>First Name</label>
+          <input class="form-input" type="text" placeholder="Your first name"
+            [(ngModel)]="firstName" />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input class="form-input" type="text" placeholder="Your last name"
+            [(ngModel)]="lastName" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input class="form-input" type="text" [value]="profile()?.email" disabled />
+          <p class="setting-hint">Email cannot be changed.</p>
+        </div>
+        <button class="btn-primary" (click)="updateProfile()" [disabled]="loading()">
+          {{ loading() ? 'Saving...' : 'Save Profile' }}
+        </button>
       </div>
     </div>
+  </section>
 
+  <!-- Security -->
+  <section class="settings-section">
+    <h2 class="section-title">Security</h2>
     <div class="settings-card">
       <h3 class="card-subtitle">Change Password</h3>
       <div class="form-stack">
         <div class="form-group">
           <label>Current Password</label>
           <input class="form-input" type="password" placeholder="••••••••"
-            [value]="currentPassword()" (input)="currentPassword.set($any($event.target).value)" />
+            [(ngModel)]="currentPassword" />
         </div>
         <div class="form-group">
           <label>New Password</label>
           <input class="form-input" type="password" placeholder="••••••••"
-            [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" />
+            [(ngModel)]="newPassword" />
         </div>
         <div class="form-group">
           <label>Confirm New Password</label>
           <input class="form-input" type="password" placeholder="••••••••"
-            [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)" />
+            [(ngModel)]="confirmPassword" />
         </div>
-        <button class="btn-primary" disabled>Update Password</button>
+        <button class="btn-primary" (click)="changePassword()" [disabled]="loading() || !currentPassword() || !newPassword()">
+          Update Password
+        </button>
       </div>
     </div>
   </section>
@@ -49,6 +85,9 @@
           <button class="toggle-btn" [class.active]="currency() === 'USD'" (click)="setCurrency('USD')">USD</button>
           <button class="toggle-btn" [class.active]="currency() === 'EUR'" (click)="setCurrency('EUR')">EUR</button>
         </div>
+      </div>
+      <div style="margin-top: 1.5rem;">
+        <button class="btn-primary" (click)="updateProfile()" [disabled]="loading()">Save Preferences</button>
       </div>
     </div>
   </section>

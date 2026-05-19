@@ -1,16 +1,16 @@
 <div class="auth-container">
   <div class="auth-card">
-    <div class="logo-section">
+    <div class="logo-section animate-fade-in">
       <div class="logo">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <svg width="50" height="50" viewBox="0 0 40 40" fill="none">
           <path d="M20 0L25 15L40 20L25 25L20 40L15 25L0 20L15 15L20 0Z" fill="#F5A623"/>
         </svg>
-        <h1>CryptoFlow</h1>
+        <h1 class="animate-text-glow">Investee</h1>
       </div>
-      <p>Get started with your crypto investment tracker</p>
+      <p class="animate-slide-up">Get started with your crypto investment tracker</p>
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="auth-form">
+    <form (ngSubmit)="onSubmit()" class="auth-form animate-fade-in-up">
       <h2>Create Account</h2>
 
       @if (error()) {
@@ -39,6 +39,12 @@
           placeholder="At least 8 characters"
           required
         />
+        <div class="password-requirements">
+          <p [class.met]="password().length >= 8">● At least 8 characters</p>
+          <p [class.met]="hasUpperCase(password())">● One uppercase letter</p>
+          <p [class.met]="hasNumber(password())">● One number</p>
+          <p [class.met]="hasSpecialChar(password())">● One special character</p>
+        </div>
       </div>
 
       <div class="form-group">
@@ -51,10 +57,18 @@
           placeholder="Re-enter your password"
           required
         />
+        @if (confirmPassword() && password() !== confirmPassword()) {
+          <p class="validation-error">Passwords do not match</p>
+        }
       </div>
 
-      <button type="submit" class="btn-primary" [disabled]="loading()">
-        {{ loading() ? 'Creating account...' : 'Register' }}
+      <button type="submit" class="btn-primary" [disabled]="loading() || !isFormValid()">
+        @if (loading()) {
+          <span class="spinner"></span>
+          Creating account...
+        } @else {
+          Register
+        }
       </button>
 
       <p class="auth-link">

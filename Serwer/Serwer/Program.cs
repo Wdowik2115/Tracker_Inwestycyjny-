@@ -63,6 +63,7 @@ namespace Serwer
             builder.Services.AddScoped<IPortfolioService, PortfolioService>();
             builder.Services.AddScoped<IPriceAlertService, PriceAlertService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserService, UserService>();
 
             // ── Background Services ───────────────────────────────────────────
             builder.Services.AddHostedService<PriceAlertBackgroundService>();

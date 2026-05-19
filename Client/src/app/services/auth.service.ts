@@ -1,24 +1,25 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
-import { AuthResponseDto, LoginDto, RegisterDto } from '../models';
+import { Observable, tap, of } from 'rxjs';
+import { AuthResponseDto, LoginDto, RegisterDto, UserDto } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private http = inject(HttpClient);
+  private router = inject(Router);
   private apiUrl = `${environment.apiUrl}/auth`;
+  private userApiUrl = `${environment.apiUrl}/user`;
   private tokenKey = 'auth_token';
 
   isAuthenticated = signal<boolean>(false);
   currentUser = signal<AuthResponseDto | null>(null);
+  userProfile = signal<UserDto | null>(null);
 
-  constructor(
-    private http: HttpClient,
-    private router: Router
-  ) {
+  constructor() {
     this.checkAuth();
   }
 
@@ -32,14 +33,19 @@ export class AuthService {
         return;
       }
       this.isAuthenticated.set(true);
-      // Restore currentUser from token claims if available
-      if (payload.email || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']) {
-        const email = payload.email ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
-        this.currentUser.set({ token, userId: payload.sub ?? '', email });
-      }
+      const email = payload.email ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+      this.currentUser.set({ token, userId: payload.sub ?? '', email });
+      this.fetchProfile().subscribe();
     } catch {
       localStorage.removeItem(this.tokenKey);
     }
+  }
+
+  fetchProfile(): Observable<UserDto | null> {
+    if (!this.isAuthenticated()) return of(null);
+    return this.http.get<UserDto>(`${this.userApiUrl}/profile`).pipe(
+      tap(profile => this.userProfile.set(profile))
+    );
   }
 
   register(dto: RegisterDto): Observable<AuthResponseDto> {
@@ -58,6 +64,7 @@ export class AuthService {
     localStorage.setItem(this.tokenKey, response.token);
     this.isAuthenticated.set(true);
     this.currentUser.set(response);
+    this.fetchProfile().subscribe();
     this.router.navigate(['/dashboard']);
   }
 
@@ -65,6 +72,7 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
+    this.userProfile.set(null);
     this.router.navigate(['/login']);
   }
 
