@@ -17,8 +17,8 @@ namespace Investe.Application.Interfaces.Services
             int pageSize, 
             Guid? walletId = null, 
             string? symbol = null, 
-            DateTime? startDate = null, 
-            DateTime? endDate = null);
+            DateOnly? startDate = null, 
+            DateOnly? endDate = null);
 
         /// <summary>Deletes a transaction owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteTransactionAsync(Guid userId, Guid transactionId);

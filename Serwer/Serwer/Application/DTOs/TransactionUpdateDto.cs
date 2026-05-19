@@ -19,7 +19,7 @@ namespace Investe.Application.DTOs
         [Range(0, double.MaxValue)]
         public decimal? CostBasisPerUnit { get; set; }
 
-        public DateTime? ExecutedAt { get; set; }
+        public DateOnly? ExecutedAt { get; set; }
 
         [StringLength(1000)]
         public string? Notes { get; set; }
