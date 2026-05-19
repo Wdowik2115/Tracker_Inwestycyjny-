@@ -21,6 +21,7 @@ export class PortfolioHeaderComponent implements OnInit, OnDestroy {
 
   portfolio = signal<PortfolioSummaryDto | null>(null);
   currency = signal('USD');
+  hideValues = signal(false);
 
   ngOnInit(): void {
     this.userService.getProfile().subscribe({

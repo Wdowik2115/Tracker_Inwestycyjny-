@@ -101,6 +101,7 @@ namespace Investe.Application.Services
                 positions.Add(new PositionDto
                 {
                     Symbol = asset.Symbol,
+                    Name = asset.Name,
                     Quantity = asset.Quantity,
                     AvgCostBasis = asset.AverageBuyPrice,
                     CurrentPrice = currentPrice,
@@ -112,12 +113,25 @@ namespace Investe.Application.Services
                 totalValue += value;
             }
 
+            var totalCostBasis = positions.Sum(p => p.Quantity * p.AvgCostBasis);
+            var totalPnl = totalValue - totalCostBasis;
+            var totalPnlPercent = totalCostBasis > 0 ? totalPnl / totalCostBasis * 100m : 0m;
+
+            var allTxs = (await _unitOfWork.Transactions.GetTransactionsByWalletIdAsync(walletId))
+                .OrderBy(t => t.ExecutedAt)
+                .ToList();
+            var realizedPnl = CalculateRealizedPnl(allTxs);
+
             return new WalletDetailsDto
             {
                 Id = wallet.Id,
                 Name = wallet.Name,
                 Description = wallet.Description,
                 TotalValue = totalValue,
+                AssetCount = positions.Count,
+                Pnl = totalPnl,
+                PnlPercent = totalPnlPercent,
+                RealizedPnl = realizedPnl,
                 Assets = positions
             };
         }
@@ -141,7 +155,8 @@ namespace Investe.Application.Services
             return wallet.ToDto();
         }
 
-        /// <summary>Returns daily portfolio value history for a wallet over the last <paramref name="days"/> days.</summary>
+        /// <summary>Returns daily portfolio value history for a wallet over the last <paramref name="days"/> days,
+        /// replaying transactions per date so the chart reflects when assets were actually acquired.</summary>
         public async Task<WalletHistoryDto> GetWalletHistoryAsync(Guid userId, Guid walletId, int days)
         {
             var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
@@ -150,34 +165,88 @@ namespace Investe.Application.Services
             if (wallet.UserId != userId)
                 throw new UnauthorizedAccessException("Wallet does not belong to this user.");
 
-            var assets = (await _unitOfWork.Assets.GetAssetsByWalletIdAsync(walletId)).ToList();
-            if (assets.Count == 0)
+            // Use transactions (not current assets) so holdings are date-accurate
+            var allTxs = (await _unitOfWork.Transactions.GetTransactionsByWalletIdAsync(walletId))
+                .OrderBy(t => t.ExecutedAt)
+                .ToList();
+
+            if (allTxs.Count == 0)
                 return new WalletHistoryDto { WalletId = walletId };
 
-            // Fetch price history per unique symbol (DB-cached, falls back to CoinGecko)
+            var symbols = allTxs.Select(t => t.Symbol).Distinct().ToList();
+
             var symbolHistories = new Dictionary<string, List<HistoryPointDto>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var symbol in assets.Select(a => a.Symbol).Distinct())
+            foreach (var symbol in symbols)
                 symbolHistories[symbol] = await _priceService.GetPriceHistoryAsync(symbol, days);
 
-            // Build daily wallet value: for each date, sum(qty × price_on_that_day)
+            var cutoff = DateTime.UtcNow.Date.AddDays(-days);
             var allDates = symbolHistories.Values
                 .SelectMany(h => h.Select(p => p.Date.Date))
                 .Distinct()
+                .Where(d => d >= cutoff)
                 .OrderBy(d => d)
                 .ToList();
 
-            var points = allDates.Select(date =>
-            {
-                var value = assets.Sum(asset =>
+            if (allDates.Count == 0)
+                return new WalletHistoryDto { WalletId = walletId };
+
+            var points = allDates
+                .Select(date =>
                 {
-                    if (!symbolHistories.TryGetValue(asset.Symbol, out var history)) return 0m;
-                    var pricePoint = history.FirstOrDefault(p => p.Date.Date == date);
-                    return pricePoint != null ? asset.Quantity * pricePoint.Value : 0m;
-                });
-                return new HistoryPointDto { Date = date, Value = value };
-            }).ToList();
+                    // Replay all transactions up to this date to get holdings as of that day
+                    var holdings = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var tx in allTxs.Where(t => t.ExecutedAt.Date <= date))
+                    {
+                        holdings.TryGetValue(tx.Symbol, out var qty);
+                        holdings[tx.Symbol] = tx.Type == TransactionType.Buy
+                            ? qty + tx.Quantity
+                            : qty - tx.Quantity;
+                    }
+
+                    var value = holdings.Sum(h =>
+                    {
+                        if (h.Value <= 0) return 0m;
+                        if (!symbolHistories.TryGetValue(h.Key, out var history)) return 0m;
+                        var pricePoint = history.FirstOrDefault(p => p.Date.Date == date);
+                        return pricePoint != null ? h.Value * pricePoint.Value : 0m;
+                    });
+
+                    return new HistoryPointDto { Date = date, Value = value };
+                })
+                .Where(p => p.Value > 0)
+                .ToList();
 
             return new WalletHistoryDto { WalletId = walletId, Points = points };
+        }
+
+        /// <summary>Calculates realized P&amp;L by replaying transactions per symbol using weighted average cost.</summary>
+        private static decimal CalculateRealizedPnl(IEnumerable<Transaction> transactions)
+        {
+            decimal realized = 0;
+            var bySymbol = transactions.GroupBy(t => t.Symbol, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var group in bySymbol)
+            {
+                decimal avgCost = 0;
+                decimal qty = 0;
+
+                foreach (var tx in group.OrderBy(t => t.ExecutedAt))
+                {
+                    if (tx.Type == TransactionType.Buy)
+                    {
+                        var totalCost = qty * avgCost + tx.Quantity * tx.PriceAtTime;
+                        qty += tx.Quantity;
+                        avgCost = qty > 0 ? totalCost / qty : 0;
+                    }
+                    else if (tx.Type == TransactionType.Sell)
+                    {
+                        realized += (tx.PriceAtTime - avgCost) * tx.Quantity;
+                        qty = Math.Max(0, qty - tx.Quantity);
+                    }
+                }
+            }
+
+            return realized;
         }
 
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>

@@ -133,7 +133,7 @@
       <select class="form-input" [value]="form.walletId()" (change)="form.walletId.set($any($event.target).value)">
         <option value="">Select wallet…</option>
         @for (w of wallets(); track w.id) {
-          <option [value]="w.id">{{ w.name }}</option>
+          <option [value]="w.id" [selected]="w.id === form.walletId()">{{ w.name }}</option>
         }
       </select>
     </div>

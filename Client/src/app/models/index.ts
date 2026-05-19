@@ -49,6 +49,7 @@ export interface WalletDto {
 
 export interface WalletDetailsDto extends WalletDto {
   assets: PositionDto[];
+  realizedPnl: number;
 }
 
 export interface CreateWalletDto {
@@ -107,6 +108,7 @@ export interface TransactionUpdateDto {
 // Portfolio models
 export interface PositionDto {
   symbol: string;
+  name: string;
   quantity: number;
   avgCostBasis: number;
   currentPrice: number;
