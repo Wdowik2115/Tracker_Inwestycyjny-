@@ -13,7 +13,7 @@ import { PortfolioService } from '../../../services/portfolio.service';
   styleUrl: './sidebar.component.css'
 })
 export class SidebarComponent {
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private walletService = inject(WalletService);
   private portfolioService = inject(PortfolioService);
 

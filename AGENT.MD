@@ -3,9 +3,28 @@ Przed generowaniem kodu przeczytaj cały plik. Przestrzegaj opisanych tu konwenc
 
 -----
 
+## Nowe Funkcjonalności (Moja Sekcja)
+
+### Zarządzanie Profilem i Bezpieczeństwem Konta
+
+Ta funkcjonalność umożliwia użytkownikom pełne zarządzanie swoimi danymi osobowymi oraz ustawieniami bezpieczeństwa.
+
+**Główne cechy:**
+- Aktualizacja danych profilowych (Imię, Nazwisko).
+- Zmiana hasła z walidacją obecnego hasła.
+- Zarządzanie preferencjami aplikacji (np. domyślna waluta wyświetlania).
+- Ulepszony system logowania z obsługą błędów i feedbackiem UI.
+
+**Architektura:**
+- `UserController` - endpointy do pobierania i aktualizacji profilu.
+- `UserService` - logika biznesowa zmiany danych i haseł.
+- `SettingsComponent` (Angular) - kompletny formularz zarządzania profilem.
+
+-----
+
 ## Projekt
 
-*Investe* to aplikacja webowa do śledzenia inwestycji kryptowalutowych.
+*Investee* to aplikacja webowa do śledzenia inwestycji kryptowalutowych.
 
 - Frontend: *Angular 17* (SPA, standalone components)
 - Backend: *ASP.NET Core Web API (.NET 8)*, architektura warstwowa
@@ -15,9 +34,9 @@ Przed generowaniem kodu przeczytaj cały plik. Przestrzegaj opisanych tu konwenc
 
 Repozytorium składa się z dwóch projektów:
 
-investe/
-├── investe-client/     # Angular 17
-└── investe-api/        # ASP.NET Core Web API
+investee/
+├── investee-client/     # Angular 17
+└── investee-api/        # ASP.NET Core Web API
 
 -----
 
@@ -289,7 +308,7 @@ gh copilot suggest "dodaj migrację EF Core dla nowej kolumny w Wallet"
 gh copilot explain "dotnet ef migrations add AddWalletDescription"
 
 # Przekaż kontekst projektu
-gh copilot suggest -t shell "uruchom tylko testy dla warstwy serwisów w investe-api"
+gh copilot suggest -t shell "uruchom tylko testy dla warstwy serwisów w investee-api"
 
 ### OpenCode
 
@@ -307,7 +326,7 @@ Gemini CLI jest najlepszy do analizy i planowania. Używaj go do:
 gemini "Przejrzyj plik TransactionService.cs pod kątem zgodności z architekturą opisaną w AGENTS.md"
 
 # Planowanie nowej funkcjonalności
-gemini "Zaplanuj implementację eksportu historii transakcji do CSV w projekcie Investe zgodnie z AGENTS.md"
+gemini "Zaplanuj implementację eksportu historii transakcji do CSV w projekcie Investee zgodnie z AGENTS.md"
 
 # Code review
 gemini "Czy ten kod repozytorium jest zgodny z wzorcem z AGENTS.md? [wklej kod]"

@@ -3,35 +3,99 @@
     <h1 class="page-title">Settings</h1>
   </div>
 
-  <!-- Account -->
+  <!-- Profile -->
   <section class="settings-section">
-    <h2 class="section-title">Account</h2>
+    <h2 class="section-title">Profile</h2>
     <div class="settings-card">
-      <div class="setting-row">
-        <span class="setting-label">Email</span>
-        <span class="setting-value">{{ authService.currentUser()?.email ?? '—' }}</span>
+      @if (profileError()) {
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+          {{ profileError() }}
+          <button class="alert-close" (click)="profileError.set(null)">&times;</button>
+        </div>
+      }
+
+      @if (profileSuccess()) {
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+          {{ profileSuccess() }}
+          <button class="alert-close" (click)="profileSuccess.set(null)">&times;</button>
+        </div>
+      }
+
+      <div class="form-stack">
+        <div class="form-group">
+          <label>First Name</label>
+          <input class="form-input" type="text" placeholder="Your first name"
+            [(ngModel)]="firstName" />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input class="form-input" type="text" placeholder="Your last name"
+            [(ngModel)]="lastName" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input class="form-input" type="text" [value]="profile()?.email" disabled />
+          <p class="setting-hint">Email cannot be changed.</p>
+        </div>
+        <button class="btn-primary" (click)="updateProfile()" [disabled]="loading()">
+          {{ loading() ? 'Saving...' : 'Save Profile' }}
+        </button>
       </div>
     </div>
+  </section>
 
+  <!-- Security -->
+  <section class="settings-section">
+    <h2 class="section-title">Security</h2>
     <div class="settings-card">
       <h3 class="card-subtitle">Change Password</h3>
+
+      @if (securityError()) {
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+          {{ securityError() }}
+          <button class="alert-close" (click)="securityError.set(null)">&times;</button>
+        </div>
+      }
+
+      @if (securitySuccess()) {
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+          {{ securitySuccess() }}
+          <button class="alert-close" (click)="securitySuccess.set(null)">&times;</button>
+        </div>
+      }
+
       <div class="form-stack">
         <div class="form-group">
           <label>Current Password</label>
           <input class="form-input" type="password" placeholder="••••••••"
-            [value]="currentPassword()" (input)="currentPassword.set($any($event.target).value)" />
+            [(ngModel)]="currentPassword" />
         </div>
         <div class="form-group">
           <label>New Password</label>
           <input class="form-input" type="password" placeholder="••••••••"
-            [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" />
+            [(ngModel)]="newPassword" />
+          
+          @if (newPassword()) {
+            <div class="password-requirements" style="margin-top: 10px;">
+              <p [class.met]="newPassword().length >= 8">● At least 8 characters</p>
+              <p [class.met]="hasUpperCase(newPassword())">● One uppercase letter</p>
+              <p [class.met]="hasNumber(newPassword())">● One number</p>
+              <p [class.met]="hasSpecialChar(newPassword())">● One special character</p>
+            </div>
+          }
         </div>
         <div class="form-group">
           <label>Confirm New Password</label>
           <input class="form-input" type="password" placeholder="••••••••"
-            [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)" />
+            [(ngModel)]="confirmPassword" />
+          @if (confirmPassword() && newPassword() !== confirmPassword()) {
+            <p class="validation-error">Passwords do not match</p>
+          }
         </div>
-        <button class="btn-primary" disabled>Update Password</button>
+        <button class="btn-primary" (click)="changePassword()" 
+          [disabled]="loading() || !currentPassword() || !isPasswordStrong() || newPassword() !== confirmPassword()">
+          Update Password
+        </button>
       </div>
     </div>
   </section>
@@ -40,6 +104,18 @@
   <section class="settings-section">
     <h2 class="section-title">Display</h2>
     <div class="settings-card">
+      @if (displayError()) {
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+          {{ displayError() }}
+          <button class="alert-close" (click)="displayError.set(null)">&times;</button>
+        </div>
+      }
+      @if (displaySuccess()) {
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+          {{ displaySuccess() }}
+          <button class="alert-close" (click)="displaySuccess.set(null)">&times;</button>
+        </div>
+      }
       <div class="setting-row">
         <div>
           <span class="setting-label">Currency</span>
@@ -49,6 +125,9 @@
           <button class="toggle-btn" [class.active]="currency() === 'USD'" (click)="setCurrency('USD')">USD</button>
           <button class="toggle-btn" [class.active]="currency() === 'EUR'" (click)="setCurrency('EUR')">EUR</button>
         </div>
+      </div>
+      <div style="margin-top: 1.5rem;">
+        <button class="btn-primary" (click)="savePreferences()" [disabled]="loading()">Save Preferences</button>
       </div>
     </div>
   </section>

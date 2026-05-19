@@ -15,6 +15,27 @@ export interface AuthResponseDto {
   email: string;
 }
 
+// User models
+export interface UserDto {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  preferredCurrency: string;
+  createdAt: string;
+}
+
+export interface UpdateProfileDto {
+  firstName?: string;
+  lastName?: string;
+  preferredCurrency: string;
+}
+
+export interface ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
+
 // Wallet models
 export interface WalletDto {
   id: string;

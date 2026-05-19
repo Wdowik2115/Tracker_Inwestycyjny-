@@ -2,6 +2,12 @@
   max-width: 680px;
 }
 
+.password-requirements p.met {
+  color: #10b981;
+  font-weight: 600;
+  transform: translateX(5px);
+}
+
 .page-header {
   margin-bottom: 28px;
 }

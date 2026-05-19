@@ -58,9 +58,13 @@
 
   <!-- Profile -->
   <div class="sidebar-profile">
-    <div class="profile-info">
-      <span class="profile-avatar">{{ (currentUser()?.email ?? 'U')[0].toUpperCase() }}</span>
-      <span class="profile-email">{{ currentUser()?.email ?? 'User' }}</span>
+    <div class="profile-info" style="cursor: pointer;" routerLink="/settings">
+<div class="profile-text">
+        @if (authService.userProfile()?.firstName) {
+          <span class="profile-name">{{ authService.userProfile()?.firstName }} {{ authService.userProfile()?.lastName }}</span>
+        }
+        <span class="profile-email">{{ authService.currentUser()?.email ?? 'User' }}</span>
+      </div>
     </div>
     <button class="logout-btn" (click)="logout()" title="Logout">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
