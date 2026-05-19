@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { RegisterDto } from '../../../models';
+import { CryptoBackgroundComponent } from '../../shared/crypto-background/crypto-background.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CryptoBackgroundComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })

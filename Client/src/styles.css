@@ -129,3 +129,61 @@ textarea {
   border-radius: 4px;
   animation: pulse 1.5s ease-in-out infinite;
 }
+
+/* Global Micro-animations */
+button, .btn-primary, .source-card, .position-row, .settings-card {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+button:active, .btn-primary:active {
+  transform: scale(0.96);
+}
+
+.source-card:hover, .settings-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Global Entrance Animations */
+.page-header, .settings-section, .dashboard-card, .wallet-card {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Polish */
+input.form-input {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+input.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.1);
+  background-color: rgba(26, 34, 54, 0.8);
+}
+
+/* Alerts */
+.alert {
+  animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+

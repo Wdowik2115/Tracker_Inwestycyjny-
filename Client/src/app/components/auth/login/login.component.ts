@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { LoginDto  } from '../../../models';
+import { CryptoBackgroundComponent } from '../../shared/crypto-background/crypto-background.component';
 
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CryptoBackgroundComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
