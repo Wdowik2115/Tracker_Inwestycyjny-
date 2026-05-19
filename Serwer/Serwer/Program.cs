@@ -34,7 +34,7 @@ namespace Serwer
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+                options.UseSqlite("Data Source=tracker-dev.db"));
 
             // ── Memory cache + HTTP clients ───────────────────────────────────
             builder.Services.AddMemoryCache();
@@ -43,6 +43,7 @@ namespace Serwer
                 client.BaseAddress = new Uri(builder.Configuration["CoinGecko:BaseUrl"]!);
                 client.Timeout = TimeSpan.FromSeconds(
                     builder.Configuration.GetValue<int>("CoinGecko:TimeoutSeconds", 10));
+                client.DefaultRequestHeaders.Add("User-Agent", "InvesteTracker/1.0");
                 var apiKey = builder.Configuration["CoinGecko:ApiKey"];
                 if (!string.IsNullOrEmpty(apiKey))
                     client.DefaultRequestHeaders.Add("x-cg-demo-api-key", apiKey);

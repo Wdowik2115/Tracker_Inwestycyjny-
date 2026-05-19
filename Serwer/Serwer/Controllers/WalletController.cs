@@ -25,6 +25,13 @@ namespace Serwer.Controllers
             return Ok(wallets);
         }
 
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetWalletDetails(Guid id)
+        {
+            var wallet = await _walletService.GetWalletDetailsAsync(User.GetUserId(), id);
+            return Ok(wallet);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateWallet([FromBody] CreateWalletDto dto)
         {

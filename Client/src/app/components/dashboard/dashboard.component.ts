@@ -1,12 +1,14 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { timer, Subscription, merge } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexStroke,
   ApexGrid, ApexTooltip, ApexFill, ApexDataLabels
 } from 'ng-apexcharts';
 import { PortfolioService } from '../../services/portfolio.service';
+import { TransactionService } from '../../services/transaction.service';
 import { ToastService } from '../../services/toast.service';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 
@@ -30,13 +32,16 @@ function generatePlaceholderSeries(baseValue: number): { x: number; y: number }[
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private portfolioService = inject(PortfolioService);
+  private transactionService = inject(TransactionService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
 
+  private refreshSub?: Subscription;
+
   loading = signal(true);
-  portfolio = toSignal(this.portfolioService.getSummary(), { initialValue: null });
+  portfolio = signal<any>(null);
 
   chartSeries = signal<ApexAxisChartSeries>([{ name: 'Portfolio Value', data: [] }]);
 
@@ -62,8 +67,16 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.titleService.setTitle('Dashboard — Investee');
-    this.portfolioService.getSummary().subscribe({
+    
+    // Auto-refresh every 30 seconds OR when a transaction is added/modified
+    this.refreshSub = merge(
+      timer(0, 30000),
+      this.transactionService.transactionAdded$
+    ).pipe(
+      switchMap(() => this.portfolioService.getSummary())
+    ).subscribe({
       next: data => {
+        this.portfolio.set(data);
         const base = data.totalValueUsdt > 0 ? data.totalValueUsdt : 10000;
         this.chartSeries.set([{ name: 'Portfolio Value', data: generatePlaceholderSeries(base) }]);
         this.loading.set(false);
@@ -73,6 +86,10 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 
   formatCurrency(v: number): string {

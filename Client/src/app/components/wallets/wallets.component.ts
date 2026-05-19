@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { Router, RouterLink } from '@angular/router';
 import { WalletService } from '../../services/wallet.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
@@ -14,7 +15,7 @@ function truncateAddress(addr: string): string {
 @Component({
   selector: 'app-wallets',
   standalone: true,
-  imports: [ModalComponent, LoadingSpinnerComponent],
+  imports: [ModalComponent, LoadingSpinnerComponent, RouterLink],
   templateUrl: './wallets.component.html',
   styleUrl: './wallets.component.css'
 })
@@ -22,6 +23,7 @@ export class WalletsComponent implements OnInit {
   private walletService = inject(WalletService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
+  private router = inject(Router);
 
   loading = signal(true);
   wallets = signal<WalletDto[]>([]);

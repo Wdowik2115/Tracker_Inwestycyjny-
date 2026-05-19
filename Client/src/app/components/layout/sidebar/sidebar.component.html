@@ -21,14 +21,14 @@
       <p class="sidebar-empty">No sources yet</p>
     } @else {
       @for (wallet of wallets(); track wallet.id) {
-        <button
+        <a
           class="source-card"
-          [class.source-card--active]="selectedSourceId() === wallet.id"
-          (click)="selectSource(wallet.id)">
+          [routerLink]="['/wallets', wallet.id]"
+          routerLinkActive="source-card--active">
           <span class="source-icon">◈</span>
           <span class="source-name">{{ wallet.name }}</span>
           <span class="source-value">${{ wallet.totalValue.toFixed(0) }}</span>
-        </button>
+        </a>
       }
     }
   </section>
