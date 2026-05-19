@@ -53,12 +53,15 @@ export interface CreateWalletDto {
 export interface TransactionDto {
   id: string;
   walletId: string;
+  walletName: string;
   coinId: string;
   symbol: string;
   type: string;
   quantity: number;
   priceAtTime: number;
   totalValue: number;
+  fee: number;
+  feeCurrency: string;
   costBasisPerUnit?: number;
   costBasisSource?: string;
   executedAt: string;
@@ -72,13 +75,18 @@ export interface TransactionCreateDto {
   type: string;
   quantity: number;
   priceAtTime: number;
+  fee?: number;
+  feeCurrency?: string;
   costBasisPerUnit?: number;
   executedAt?: string;
   notes: string;
 }
 
 export interface TransactionUpdateDto {
+  quantity?: number;
   priceAtTime?: number;
+  fee?: number;
+  feeCurrency?: string;
   costBasisPerUnit?: number;
   executedAt?: string;
   notes?: string;
