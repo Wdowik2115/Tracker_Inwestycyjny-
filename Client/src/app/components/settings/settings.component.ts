@@ -37,6 +37,9 @@ export class SettingsComponent implements OnInit {
   securityError = signal<string | null>(null);
   securitySuccess = signal<string | null>(null);
 
+  displayError = signal<string | null>(null);
+  displaySuccess = signal<string | null>(null);
+
   ngOnInit(): void {
     this.titleService.setTitle('Settings — Investee');
     this.loadProfile();
@@ -134,5 +137,28 @@ export class SettingsComponent implements OnInit {
 
   setCurrency(c: 'USD' | 'EUR'): void {
     this.currency.set(c);
+  }
+
+  savePreferences(): void {
+    this.loading.set(true);
+    this.displayError.set(null);
+    this.displaySuccess.set(null);
+
+    this.userService.updateProfile({
+      firstName: this.firstName(),
+      lastName: this.lastName(),
+      preferredCurrency: this.currency()
+    }).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.displaySuccess.set('Preferences saved successfully');
+        localStorage.setItem('display_currency', this.currency());
+        this.authService.fetchProfile().subscribe();
+      },
+      error: () => {
+        this.loading.set(false);
+        this.displayError.set('Failed to save preferences');
+      }
+    });
   }
 }

@@ -104,6 +104,18 @@
   <section class="settings-section">
     <h2 class="section-title">Display</h2>
     <div class="settings-card">
+      @if (displayError()) {
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+          {{ displayError() }}
+          <button class="alert-close" (click)="displayError.set(null)">&times;</button>
+        </div>
+      }
+      @if (displaySuccess()) {
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+          {{ displaySuccess() }}
+          <button class="alert-close" (click)="displaySuccess.set(null)">&times;</button>
+        </div>
+      }
       <div class="setting-row">
         <div>
           <span class="setting-label">Currency</span>
@@ -115,7 +127,7 @@
         </div>
       </div>
       <div style="margin-top: 1.5rem;">
-        <button class="btn-primary" (click)="updateProfile()" [disabled]="loading()">Save Preferences</button>
+        <button class="btn-primary" (click)="savePreferences()" [disabled]="loading()">Save Preferences</button>
       </div>
     </div>
   </section>

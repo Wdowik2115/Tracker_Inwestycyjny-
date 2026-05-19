@@ -59,8 +59,7 @@
   <!-- Profile -->
   <div class="sidebar-profile">
     <div class="profile-info" style="cursor: pointer;" routerLink="/settings">
-      <span class="profile-avatar">{{ (authService.userProfile()?.firstName ?? authService.currentUser()?.email ?? 'U')[0].toUpperCase() }}</span>
-      <div class="profile-text">
+<div class="profile-text">
         @if (authService.userProfile()?.firstName) {
           <span class="profile-name">{{ authService.userProfile()?.firstName }} {{ authService.userProfile()?.lastName }}</span>
         }
