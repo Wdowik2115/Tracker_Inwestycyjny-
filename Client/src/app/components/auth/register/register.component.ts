@@ -40,7 +40,7 @@ export class RegisterComponent implements OnInit {
   }
 
   hasSpecialChar(str: string): boolean {
-    return /[!@#$%^&*(),.?":{}|<>]/.test(str);
+    return /[^a-zA-Z0-9]/.test(str);
   }
 
   isFormValid(): boolean {

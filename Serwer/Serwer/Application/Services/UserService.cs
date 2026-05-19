@@ -51,6 +51,15 @@ namespace Investe.Application.Services
             if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.PasswordHash))
                 throw new ArgumentException("Incorrect old password.");
 
+            // Password validation
+            if (dto.NewPassword.Length < 8 ||
+                !dto.NewPassword.Any(char.IsUpper) ||
+                !dto.NewPassword.Any(char.IsDigit) ||
+                !dto.NewPassword.Any(ch => !char.IsLetterOrDigit(ch)))
+            {
+                throw new ArgumentException("New password does not meet requirements.");
+            }
+
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
 
             await _unitOfWork.Users.UpdateAsync(user);
