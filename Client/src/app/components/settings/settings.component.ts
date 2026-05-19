@@ -30,8 +30,12 @@ export class SettingsComponent implements OnInit {
   confirmPassword = signal('');
 
   loading = signal(false);
-  error = signal<string | null>(null);
-  success = signal<string | null>(null);
+  
+  profileError = signal<string | null>(null);
+  profileSuccess = signal<string | null>(null);
+  
+  securityError = signal<string | null>(null);
+  securitySuccess = signal<string | null>(null);
 
   ngOnInit(): void {
     this.titleService.setTitle('Settings — Investee');
@@ -46,14 +50,36 @@ export class SettingsComponent implements OnInit {
         this.lastName.set(profile.lastName ?? '');
         this.currency.set(profile.preferredCurrency as 'USD' | 'EUR');
       },
-      error: (err) => this.error.set('Failed to load profile')
+      error: (err) => this.profileError.set('Failed to load profile')
     });
+  }
+
+  hasUpperCase(str: string): boolean {
+    return /[A-Z]/.test(str);
+  }
+
+  hasNumber(str: string): boolean {
+    return /[0-9]/.test(str);
+  }
+
+  hasSpecialChar(str: string): boolean {
+    return /[^a-zA-Z0-9]/.test(str);
+  }
+
+  isPasswordStrong(): boolean {
+    const p = this.newPassword();
+    return (
+      p.length >= 8 &&
+      this.hasUpperCase(p) &&
+      this.hasNumber(p) &&
+      this.hasSpecialChar(p)
+    );
   }
 
   updateProfile(): void {
     this.loading.set(true);
-    this.error.set(null);
-    this.success.set(null);
+    this.profileError.set(null);
+    this.profileSuccess.set(null);
 
     this.userService.updateProfile({
       firstName: this.firstName(),
@@ -62,25 +88,31 @@ export class SettingsComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.success.set('Profile updated successfully');
+        this.profileSuccess.set('Profile updated successfully');
         localStorage.setItem('display_currency', this.currency());
+        this.authService.fetchProfile().subscribe();
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('Failed to update profile');
+        this.profileError.set('Failed to update profile');
       }
     });
   }
 
   changePassword(): void {
     if (this.newPassword() !== this.confirmPassword()) {
-      this.error.set('Passwords do not match');
+      this.securityError.set('Passwords do not match');
+      return;
+    }
+
+    if (!this.isPasswordStrong()) {
+      this.securityError.set('New password does not meet requirements');
       return;
     }
 
     this.loading.set(true);
-    this.error.set(null);
-    this.success.set(null);
+    this.securityError.set(null);
+    this.securitySuccess.set(null);
 
     this.userService.changePassword({
       oldPassword: this.currentPassword(),
@@ -88,14 +120,14 @@ export class SettingsComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.success.set('Password changed successfully');
+        this.securitySuccess.set('Password changed successfully');
         this.currentPassword.set('');
         this.newPassword.set('');
         this.confirmPassword.set('');
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message ?? 'Failed to change password');
+        this.securityError.set(err.error?.message ?? 'Failed to change password');
       }
     });
   }

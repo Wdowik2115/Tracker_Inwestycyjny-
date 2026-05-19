@@ -73,10 +73,10 @@ namespace Serwer.Tests.Application.Services
             var user = new User { Id = userId, PasswordHash = BCrypt.Net.BCrypt.HashPassword("old_pass") };
             userRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
 
-            var dto = new ChangePasswordDto { OldPassword = "old_pass", NewPassword = "new_pass" };
+            var dto = new ChangePasswordDto { OldPassword = "old_pass", NewPassword = "NewStrongPassword123!" };
             await svc.ChangePasswordAsync(userId, dto);
 
-            Assert.True(BCrypt.Net.BCrypt.Verify("new_pass", user.PasswordHash));
+            Assert.True(BCrypt.Net.BCrypt.Verify("NewStrongPassword123!", user.PasswordHash));
             uow.Verify(u => u.CompleteAsync(), Times.Once);
         }
     }
