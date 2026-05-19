@@ -52,5 +52,12 @@ namespace Serwer.Controllers
             await _walletService.DeleteWalletAsync(User.GetUserId(), id);
             return NoContent();
         }
+
+        [HttpGet("{id:guid}/history")]
+        public async Task<IActionResult> GetWalletHistory(Guid id, [FromQuery] int days = 30)
+        {
+            var history = await _walletService.GetWalletHistoryAsync(User.GetUserId(), id, Math.Clamp(days, 7, 365));
+            return Ok(history);
+        }
     }
 }

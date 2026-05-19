@@ -4,6 +4,7 @@ using Investe.Application.Services;
 using Investe.Infrastructure.Persistence;
 using Investe.Infrastructure.Persistence.Repositories;
 using Investe.Infrastructure.Persistence.Repositories.Implementations;
+using Investe.Infrastructure.Persistence.Repositories.Common;
 using Investe.Infrastructure.Persistence.UnitOfWork;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,7 @@ namespace Serwer
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite("Data Source=tracker-dev.db"));
+                options.UseSqlServer(connectionString));
 
             // ── Memory cache + HTTP clients ───────────────────────────────────
             builder.Services.AddMemoryCache();
@@ -56,6 +57,7 @@ namespace Serwer
             builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
             builder.Services.AddScoped<IPriceAlertRepository, PriceAlertRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IPriceHistoryCacheRepository, PriceHistoryCacheRepository>();
 
             // ── Application Services ──────────────────────────────────────────
             builder.Services.AddScoped<ICoinPriceService, CoinPriceService>();
@@ -134,7 +136,7 @@ namespace Serwer
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 if (app.Environment.IsDevelopment())
                 {
-                    db.Database.EnsureCreated();
+                    db.Database.Migrate();
                 }
                 else
                 {

@@ -12,12 +12,30 @@ namespace Serwer.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "PriceHistoryCache",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CoinId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PriceUsd = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: false),
+                    FetchedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PriceHistoryCache", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PreferredCurrency = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -105,6 +123,8 @@ namespace Serwer.Migrations
                     Quantity = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: false),
                     PriceAtTime = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: false),
                     TotalValue = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: false),
+                    Fee = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: false),
+                    FeeCurrency = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CostBasisPerUnit = table.Column<decimal>(type: "decimal(18,8)", precision: 18, scale: 8, nullable: true),
                     CostBasisSource = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExecutedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -133,6 +153,12 @@ namespace Serwer.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PriceHistoryCache_CoinId_Date",
+                table: "PriceHistoryCache",
+                columns: new[] { "CoinId", "Date" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transactions_WalletId",
                 table: "Transactions",
                 column: "WalletId");
@@ -157,6 +183,9 @@ namespace Serwer.Migrations
 
             migrationBuilder.DropTable(
                 name: "PriceAlerts");
+
+            migrationBuilder.DropTable(
+                name: "PriceHistoryCache");
 
             migrationBuilder.DropTable(
                 name: "Transactions");

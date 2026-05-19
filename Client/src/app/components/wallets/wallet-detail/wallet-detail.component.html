@@ -61,10 +61,10 @@
                   <td>{{ asset.quantity }}</td>
                   <td>{{ formatCurrency(asset.avgCostBasis) }}</td>
                   <td>{{ formatCurrency(asset.currentPrice) }}</td>
-                  <td>{{ formatCurrency(asset.valueUsdt) }}</td>
+                  <td>{{ formatCurrency(asset.value) }}</td>
                   <td>
-                    <div class="pnl-cell" [class.negative]="asset.pnlUsdt < 0" [class.positive]="asset.pnlUsdt > 0">
-                      <div>{{ formatCurrency(asset.pnlUsdt) }}</div>
+                    <div class="pnl-cell" [class.negative]="asset.pnl < 0" [class.positive]="asset.pnl > 0">
+                      <div>{{ formatCurrency(asset.pnl) }}</div>
                       <div class="pnl-percent">{{ formatPercent(asset.pnlPercent) }}</div>
                     </div>
                   </td>

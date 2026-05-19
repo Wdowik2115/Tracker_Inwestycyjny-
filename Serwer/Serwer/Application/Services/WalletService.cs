@@ -37,7 +37,7 @@ namespace Investe.Application.Services
             return wallet.ToDto();
         }
 
-        /// <summary>Returns all wallets belonging to the given user with their total value calculated.</summary>
+        /// <summary>Returns all wallets belonging to the given user with their total value and P&amp;L calculated.</summary>
         public async Task<IEnumerable<WalletDto>> GetUserWalletsAsync(Guid userId)
         {
             var wallets = await _unitOfWork.Wallets.GetWalletsByUserIdAsync(userId);
@@ -58,6 +58,9 @@ namespace Investe.Application.Services
             {
                 var walletAssets = allAssets.Where(x => x.walletId == wallet.Id).ToList();
                 var totalValue = walletAssets.Sum(x => x.asset.Quantity * prices.GetValueOrDefault(x.asset.Symbol, 0m));
+                var costBasis = walletAssets.Sum(x => x.asset.Quantity * x.asset.AverageBuyPrice);
+                var pnl = totalValue - costBasis;
+                var pnlPercent = costBasis > 0 ? pnl / costBasis * 100m : 0m;
 
                 return new WalletDto
                 {
@@ -65,12 +68,14 @@ namespace Investe.Application.Services
                     Name = wallet.Name,
                     Description = wallet.Description,
                     TotalValue = totalValue,
-                    AssetCount = walletAssets.Count
+                    AssetCount = walletAssets.Count,
+                    Pnl = pnl,
+                    PnlPercent = pnlPercent
                 };
             });
         }
 
-        /// <summary>Returns detailed information about a specific wallet, including assets and P&L.</summary>
+        /// <summary>Returns detailed information about a specific wallet, including assets and P&amp;L.</summary>
         public async Task<WalletDetailsDto> GetWalletDetailsAsync(Guid userId, Guid walletId)
         {
             var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
@@ -88,10 +93,10 @@ namespace Investe.Application.Services
             foreach (var asset in assets)
             {
                 var currentPrice = prices.GetValueOrDefault(asset.Symbol, 0m);
-                var valueUsdt = asset.Quantity * currentPrice;
+                var value = asset.Quantity * currentPrice;
                 var costBasis = asset.Quantity * asset.AverageBuyPrice;
-                var pnlUsdt = valueUsdt - costBasis;
-                var pnlPercent = costBasis > 0 ? pnlUsdt / costBasis * 100m : 0m;
+                var pnl = value - costBasis;
+                var pnlPercent = costBasis > 0 ? pnl / costBasis * 100m : 0m;
 
                 positions.Add(new PositionDto
                 {
@@ -99,12 +104,12 @@ namespace Investe.Application.Services
                     Quantity = asset.Quantity,
                     AvgCostBasis = asset.AverageBuyPrice,
                     CurrentPrice = currentPrice,
-                    ValueUsdt = valueUsdt,
-                    PnlUsdt = pnlUsdt,
+                    Value = value,
+                    Pnl = pnl,
                     PnlPercent = pnlPercent
                 });
 
-                totalValue += valueUsdt;
+                totalValue += value;
             }
 
             return new WalletDetailsDto
@@ -134,6 +139,45 @@ namespace Investe.Application.Services
 
             _logger.LogInformation("Wallet {WalletId} updated by user {UserId}", walletId, userId);
             return wallet.ToDto();
+        }
+
+        /// <summary>Returns daily portfolio value history for a wallet over the last <paramref name="days"/> days.</summary>
+        public async Task<WalletHistoryDto> GetWalletHistoryAsync(Guid userId, Guid walletId, int days)
+        {
+            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+                ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
+
+            if (wallet.UserId != userId)
+                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+
+            var assets = (await _unitOfWork.Assets.GetAssetsByWalletIdAsync(walletId)).ToList();
+            if (assets.Count == 0)
+                return new WalletHistoryDto { WalletId = walletId };
+
+            // Fetch price history per unique symbol (DB-cached, falls back to CoinGecko)
+            var symbolHistories = new Dictionary<string, List<HistoryPointDto>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var symbol in assets.Select(a => a.Symbol).Distinct())
+                symbolHistories[symbol] = await _priceService.GetPriceHistoryAsync(symbol, days);
+
+            // Build daily wallet value: for each date, sum(qty × price_on_that_day)
+            var allDates = symbolHistories.Values
+                .SelectMany(h => h.Select(p => p.Date.Date))
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            var points = allDates.Select(date =>
+            {
+                var value = assets.Sum(asset =>
+                {
+                    if (!symbolHistories.TryGetValue(asset.Symbol, out var history)) return 0m;
+                    var pricePoint = history.FirstOrDefault(p => p.Date.Date == date);
+                    return pricePoint != null ? asset.Quantity * pricePoint.Value : 0m;
+                });
+                return new HistoryPointDto { Date = date, Value = value };
+            }).ToList();
+
+            return new WalletHistoryDto { WalletId = walletId, Points = points };
         }
 
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>

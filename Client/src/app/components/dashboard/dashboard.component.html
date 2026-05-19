@@ -1,107 +1,69 @@
 <div class="page">
 
-  <!-- Summary card -->
-  <div class="summary-card">
-    @if (loading()) {
-      <div class="summary-loading">
-        <app-loading-spinner size="md" />
-      </div>
-    } @else if (!portfolio()) {
-      <p class="text-secondary">Could not load portfolio data.</p>
-    } @else {
-      <div class="summary-top">
-        <div class="summary-left">
-          <span class="summary-label">Total Portfolio Value</span>
-          <span class="summary-value">{{ formatCurrency(portfolio()!.totalValueUsdt) }}</span>
-          <span [class]="pnlClass(portfolio()!.totalPnlUsdt)" class="summary-pnl">
-            {{ formatCurrency(portfolio()!.totalPnlUsdt) }}
-            &nbsp;·&nbsp;
-            {{ formatPercent(portfolio()!.totalValueUsdt > 0 ? (portfolio()!.totalPnlUsdt / portfolio()!.totalValueUsdt) * 100 : 0) }}
-          </span>
+  <!-- Section header -->
+  <div class="section-header">
+    <h2 class="section-title">
+      Portfolios
+      @if (!loading()) {
+        <span class="section-count">/ {{ walletCards().length }}</span>
+      }
+    </h2>
+    <a class="btn-new" routerLink="/wallets">+ New Portfolio</a>
+  </div>
+
+  <!-- Wallet cards grid -->
+  @if (loading()) {
+    <div class="wallets-grid">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="wallet-card">
+          <div class="card-header">
+            <div class="skeleton" style="width:120px;height:14px"></div>
+            <div class="skeleton" style="width:60px;height:12px"></div>
+          </div>
+          <div class="skeleton" style="width:160px;height:28px;margin:12px 0 6px"></div>
+          <div class="skeleton" style="width:110px;height:13px"></div>
+          <div class="card-chart-placeholder"></div>
         </div>
-      </div>
-    }
-
-    <div class="chart-wrapper">
-      <apx-chart
-        [series]="chartSeries()"
-        [chart]="chartOptions.chart"
-        [xaxis]="chartOptions.xaxis"
-        [stroke]="chartOptions.stroke"
-        [grid]="chartOptions.grid"
-        [tooltip]="chartOptions.tooltip"
-        [fill]="chartOptions.fill"
-        [dataLabels]="chartOptions.dataLabels"
-        [colors]="chartOptions.colors"
-      />
+      }
     </div>
-  </div>
+  } @else if (walletCards().length === 0) {
+    <div class="empty-state">
+      <p>No portfolios yet. <a routerLink="/wallets">Create your first one.</a></p>
+    </div>
+  } @else {
+    <div class="wallets-grid">
+      @for (card of walletCards(); track card.wallet.id) {
+        <div class="wallet-card">
+          <div class="card-header">
+            <span class="card-name">{{ card.wallet.name }}</span>
+            <div class="card-header-right">
+              <span class="card-source">
+                {{ card.wallet.description || 'Manual' }} · {{ card.wallet.assetCount }}
+              </span>
+              <a class="card-view" [routerLink]="['/wallets', card.wallet.id]">View</a>
+            </div>
+          </div>
 
-  <!-- Positions table -->
-  <div class="positions-section">
-    <h2 class="section-title">Positions</h2>
+          <div class="card-value">{{ formatCurrency(card.wallet.totalValue) }}</div>
 
-    @if (loading()) {
-      <div class="table-wrapper">
-        <table class="positions-table">
-          <thead>
-            <tr>
-              <th>Asset</th><th>Quantity</th><th>Avg Buy</th>
-              <th>Current Price</th><th>Value USDT</th><th>PnL $</th><th>PnL %</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (i of [1,2,3,4]; track i) {
-              <tr>
-                <td><div class="skeleton" style="width:60px;height:14px"></div></td>
-                <td><div class="skeleton" style="width:50px;height:14px"></div></td>
-                <td><div class="skeleton" style="width:70px;height:14px"></div></td>
-                <td><div class="skeleton" style="width:70px;height:14px"></div></td>
-                <td><div class="skeleton" style="width:80px;height:14px"></div></td>
-                <td><div class="skeleton" style="width:60px;height:14px"></div></td>
-                <td><div class="skeleton" style="width:50px;height:14px"></div></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    } @else if (!portfolio() || portfolio()!.positions.length === 0) {
-      <div class="empty-state">
-        <p>No positions yet. Add transactions to see your holdings here.</p>
-      </div>
-    } @else {
-      <div class="table-wrapper">
-        <table class="positions-table">
-          <thead>
-            <tr>
-              <th>Asset</th>
-              <th>Quantity</th>
-              <th>Avg Buy</th>
-              <th>Current Price</th>
-              <th>Value USDT</th>
-              <th>PnL $</th>
-              <th>PnL %</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (pos of portfolio()!.positions; track pos.symbol) {
-              <tr [class.row-profit]="pos.pnlUsdt > 0" [class.row-loss]="pos.pnlUsdt < 0">
-                <td class="asset-cell">{{ pos.symbol }}</td>
-                <td>{{ pos.quantity }}</td>
-                <td>{{ formatCurrency(pos.avgCostBasis) }}</td>
-                <td>{{ formatCurrency(pos.currentPrice) }}</td>
-                <td>{{ formatCurrency(pos.valueUsdt) }}</td>
-                <td [class]="pnlClass(pos.pnlUsdt) === 'badge-success' ? 'text-success' : 'text-danger'">
-                  {{ formatCurrency(pos.pnlUsdt) }}
-                </td>
-                <td>
-                  <span [class]="pnlClass(pos.pnlPercent)">{{ formatPercent(pos.pnlPercent) }}</span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </div>
+          <div class="card-pnl" [class.text-success]="card.wallet.pnl >= 0" [class.text-danger]="card.wallet.pnl < 0">
+            {{ card.wallet.pnl >= 0 ? '+' : '' }}{{ formatCurrency(card.wallet.pnl) }}
+            <span class="card-pnl-pct">({{ formatPercent(card.wallet.pnlPercent) }})</span>
+          </div>
+
+          <div class="card-chart">
+            <apx-chart
+              [series]="[{ name: card.wallet.name, data: card.sparklineSeries }]"
+              [chart]="sparklineChart"
+              [stroke]="sparklineStroke"
+              [fill]="sparklineFill"
+              [tooltip]="sparklineTooltip"
+              [colors]="[card.sparklineColor]"
+            />
+          </div>
+        </div>
+      }
+    </div>
+  }
+
 </div>

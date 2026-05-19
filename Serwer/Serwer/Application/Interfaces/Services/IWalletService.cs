@@ -18,5 +18,8 @@ namespace Investe.Application.Interfaces.Services
 
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteWalletAsync(Guid userId, Guid walletId);
+
+        /// <summary>Returns daily portfolio value history for a wallet over the last <paramref name="days"/> days.</summary>
+        Task<WalletHistoryDto> GetWalletHistoryAsync(Guid userId, Guid walletId, int days);
     }
 }

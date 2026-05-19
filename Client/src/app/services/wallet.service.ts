@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { WalletDto, CreateWalletDto, UpdateWalletDto, WalletDetailsDto } from '../models';
+import { WalletDto, CreateWalletDto, UpdateWalletDto, WalletDetailsDto, WalletHistoryDto } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -30,5 +30,9 @@ export class WalletService {
 
   deleteWallet(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getWalletHistory(id: string, days = 30): Observable<WalletHistoryDto> {
+    return this.http.get<WalletHistoryDto>(`${this.apiUrl}/${id}/history?days=${days}`);
   }
 }

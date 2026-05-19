@@ -1,0 +1,28 @@
+@if (portfolio()) {
+  <div class="portfolio-header">
+    <div class="stat-block">
+      <span class="stat-label">Net Worth</span>
+      <span class="stat-value">{{ formatCurrency(portfolio()!.totalValue) }}</span>
+    </div>
+
+    <div class="stat-divider"></div>
+
+    <div class="stat-block">
+      <span class="stat-label">Unrealized P&amp;L</span>
+      <span class="stat-value" [class.text-success]="portfolio()!.totalPnl >= 0" [class.text-danger]="portfolio()!.totalPnl < 0">
+        {{ portfolio()!.totalPnl >= 0 ? '+' : '' }}{{ formatCurrency(portfolio()!.totalPnl) }}
+      </span>
+      <span [class]="pnlClass(portfolio()!.totalPnl)" class="stat-badge">
+        {{ formatPercent(portfolio()!.totalInvested > 0 ? (portfolio()!.totalPnl / portfolio()!.totalInvested) * 100 : 0) }}
+        vs cost basis
+      </span>
+    </div>
+
+    <div class="stat-divider"></div>
+
+    <div class="stat-block">
+      <span class="stat-label">Total Invested</span>
+      <span class="stat-value">{{ formatCurrency(portfolio()!.totalInvested) }}</span>
+    </div>
+  </div>
+}

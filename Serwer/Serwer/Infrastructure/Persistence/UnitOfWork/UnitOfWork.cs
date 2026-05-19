@@ -15,6 +15,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
             Transactions = new TransactionRepository(_context);
             PriceAlerts = new PriceAlertRepository(_context);
             Users = new UserRepository(_context);
+            PriceHistory = new PriceHistoryCacheRepository(_context);
         }
 
         public IWalletRepository Wallets { get; private set; }
@@ -22,6 +23,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
         public ITransactionRepository Transactions { get; private set; }
         public IPriceAlertRepository PriceAlerts { get; private set; }
         public IUserRepository Users { get; private set; }
+        public IPriceHistoryCacheRepository PriceHistory { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

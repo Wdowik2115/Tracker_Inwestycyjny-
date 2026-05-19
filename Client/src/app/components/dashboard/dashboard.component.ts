@@ -1,88 +1,95 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { timer, Subscription, merge } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { RouterLink } from '@angular/router';
+import { timer, Subscription, merge, forkJoin, of } from 'rxjs';
+import { switchMap, map } from 'rxjs/operators';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import {
-  ApexAxisChartSeries, ApexChart, ApexXAxis, ApexStroke,
-  ApexGrid, ApexTooltip, ApexFill, ApexDataLabels
-} from 'ng-apexcharts';
-import { PortfolioService } from '../../services/portfolio.service';
+import { ApexChart, ApexStroke, ApexFill, ApexTooltip } from 'ng-apexcharts';
+import { WalletService } from '../../services/wallet.service';
 import { TransactionService } from '../../services/transaction.service';
+import { UserService } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
-import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
+import { WalletDto } from '../../models';
 
-function generatePlaceholderSeries(baseValue: number): { x: number; y: number }[] {
-  const points: { x: number; y: number }[] = [];
-  const now = Date.now();
-  let val = baseValue * 0.85;
-  for (let i = 29; i >= 0; i--) {
-    val += (Math.random() - 0.46) * baseValue * 0.03;
-    val = Math.max(val, baseValue * 0.5);
-    points.push({ x: now - i * 86400000, y: Math.round(val * 100) / 100 });
-  }
-  points.push({ x: now, y: baseValue });
-  return points;
+interface WalletCardData {
+  wallet: WalletDto;
+  sparklineSeries: { x: number; y: number }[];
+  sparklineColor: string;
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgApexchartsModule, LoadingSpinnerComponent],
+  imports: [NgApexchartsModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  private portfolioService = inject(PortfolioService);
+  private walletService = inject(WalletService);
   private transactionService = inject(TransactionService);
+  private userService = inject(UserService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
 
   private refreshSub?: Subscription;
 
   loading = signal(true);
-  portfolio = signal<any>(null);
+  walletCards = signal<WalletCardData[]>([]);
+  currency = signal('USD');
 
-  chartSeries = signal<ApexAxisChartSeries>([{ name: 'Portfolio Value', data: [] }]);
-
-  chartOptions: {
-    chart: ApexChart;
-    xaxis: ApexXAxis;
-    stroke: ApexStroke;
-    grid: ApexGrid;
-    tooltip: ApexTooltip;
-    fill: ApexFill;
-    dataLabels: ApexDataLabels;
-    colors: string[];
-  } = {
-    chart: { type: 'area', height: 180, background: 'transparent', toolbar: { show: false }, sparkline: { enabled: false }, animations: { enabled: true } },
-    xaxis: { type: 'datetime', labels: { style: { colors: '#8892a4', fontSize: '11px' }, datetimeUTC: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-    stroke: { curve: 'smooth', width: 2 },
-    grid: { borderColor: '#1e2d45', strokeDashArray: 3, xaxis: { lines: { show: false } } },
-    tooltip: { theme: 'dark', x: { format: 'MMM dd' }, y: { formatter: (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2 }) } },
-    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0, stops: [0, 100] } },
-    dataLabels: { enabled: false },
-    colors: ['#F5A623']
+  readonly sparklineChart: ApexChart = {
+    type: 'area',
+    height: 64,
+    sparkline: { enabled: true },
+    animations: { enabled: false }
   };
+  readonly sparklineStroke: ApexStroke = { curve: 'smooth', width: 1.5 };
+  readonly sparklineFill: ApexFill = {
+    type: 'gradient',
+    gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0, stops: [0, 100] }
+  };
+  readonly sparklineTooltip: ApexTooltip = { enabled: false };
 
   ngOnInit(): void {
     this.titleService.setTitle('Dashboard — Investee');
-    
-    // Auto-refresh every 30 seconds OR when a transaction is added/modified
+
+    this.userService.getProfile().subscribe({
+      next: u => this.currency.set(u.preferredCurrency),
+      error: () => {}
+    });
+
     this.refreshSub = merge(
       timer(0, 30000),
       this.transactionService.transactionAdded$
     ).pipe(
-      switchMap(() => this.portfolioService.getSummary())
+      switchMap(() => this.walletService.getWallets()),
+      switchMap(wallets => {
+        if (wallets.length === 0) return of({ wallets, histories: [] as any[] });
+        return forkJoin(wallets.map(w => this.walletService.getWalletHistory(w.id, 30))).pipe(
+          map(histories => ({ wallets, histories }))
+        );
+      })
     ).subscribe({
-      next: data => {
-        this.portfolio.set(data);
-        const base = data.totalValueUsdt > 0 ? data.totalValueUsdt : 10000;
-        this.chartSeries.set([{ name: 'Portfolio Value', data: generatePlaceholderSeries(base) }]);
+      next: ({ wallets, histories }) => {
+        const historyMap = new Map(histories.map((h: any) => [h.walletId, h.points as { date: string; value: number }[]]));
+
+        this.walletCards.set(wallets.map(w => {
+          const points = historyMap.get(w.id) ?? [];
+          const series = points.map(p => ({
+            x: new Date(p.date).getTime(),
+            y: p.value
+          }));
+          return {
+            wallet: w,
+            sparklineSeries: series,
+            sparklineColor: w.pnl >= 0 ? '#26a17b' : '#e74c3c'
+          };
+        }));
+
         this.loading.set(false);
       },
       error: e => {
-        this.toastService.error(e.error?.message ?? 'Failed to load portfolio');
+        this.toastService.error(e.error?.message ?? 'Failed to load dashboard');
         this.loading.set(false);
       }
     });
@@ -92,15 +99,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refreshSub?.unsubscribe();
   }
 
+  get currencySymbol(): string {
+    const symbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', PLN: 'zł' };
+    return symbols[this.currency()] ?? this.currency() + ' ';
+  }
+
   formatCurrency(v: number): string {
-    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const sym = this.currencySymbol;
+    const abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (v < 0 ? '-' : '') + sym + abs;
   }
 
   formatPercent(v: number): string {
     return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
-  }
-
-  pnlClass(v: number): string {
-    return v >= 0 ? 'badge-success' : 'badge-danger';
   }
 }
