@@ -32,6 +32,7 @@ export interface CreateWalletDto {
 export interface TransactionDto {
   id: string;
   walletId: string;
+  walletName: string;
   coinId: string;
   symbol: string;
   type: string;

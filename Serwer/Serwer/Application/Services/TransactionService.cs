@@ -34,7 +34,7 @@ namespace Investe.Application.Services
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(dto.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == dto.CoinId);
-            var executedAt = dto.ExecutedAt?.ToUniversalTime() ?? DateTime.UtcNow;
+            var executedAt = dto.ExecutedAt?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today;
 
             if (dto.Type.Equals("Buy", StringComparison.OrdinalIgnoreCase))
             {
@@ -133,11 +133,14 @@ namespace Investe.Application.Services
             int pageSize, 
             Guid? walletId = null, 
             string? symbol = null, 
-            DateTime? startDate = null, 
-            DateTime? endDate = null)
+            DateOnly? startDate = null, 
+            DateOnly? endDate = null)
         {
+            var startDateTime = startDate?.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = endDate?.ToDateTime(TimeOnly.MaxValue);
+
             var (items, totalCount) = await _unitOfWork.Transactions.GetPagedTransactionsAsync(
-                userId, page, pageSize, walletId, symbol, startDate, endDate);
+                userId, page, pageSize, walletId, symbol, startDateTime, endDateTime);
 
             return (items.Select(t => t.ToDto()), totalCount);
         }
@@ -268,7 +271,7 @@ namespace Investe.Application.Services
             if (dto.CostBasisPerUnit.HasValue)
                 transaction.CostBasisPerUnit = dto.CostBasisPerUnit.Value;
             if (dto.ExecutedAt.HasValue)
-                transaction.ExecutedAt = dto.ExecutedAt.Value.ToUniversalTime();
+                transaction.ExecutedAt = dto.ExecutedAt.Value.ToDateTime(TimeOnly.MinValue);
             if (dto.Notes is not null)
                 transaction.Notes = dto.Notes;
 

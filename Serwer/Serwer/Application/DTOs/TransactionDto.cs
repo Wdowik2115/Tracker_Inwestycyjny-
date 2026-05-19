@@ -4,6 +4,7 @@ namespace Investe.Application.DTOs
     {
         public Guid Id { get; set; }
         public Guid WalletId { get; set; }
+        public string WalletName { get; set; } = string.Empty;
         public string CoinId { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
@@ -14,7 +15,7 @@ namespace Investe.Application.DTOs
         public string FeeCurrency { get; set; } = string.Empty;
         public decimal? CostBasisPerUnit { get; set; }
         public string? CostBasisSource { get; set; }
-        public DateTime ExecutedAt { get; set; }
+        public DateOnly ExecutedAt { get; set; }
         public string Notes { get; set; } = string.Empty;
     }
 }

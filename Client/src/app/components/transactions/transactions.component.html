@@ -21,8 +21,6 @@
 
     <input class="filter-input" type="date" [value]="filterStartDate()" (input)="filterStartDate.set($any($event.target).value)" title="Start Date" />
     <input class="filter-input" type="date" [value]="filterEndDate()" (input)="filterEndDate.set($any($event.target).value)" title="End Date" />
-
-    <button class="btn-secondary" (click)="applyFilters()">Search</button>
   </div>
 
   <!-- Loading -->
@@ -47,12 +45,12 @@
           <tr>
             <th>Date</th>
             <th>Asset</th>
-            <th>Side</th>
+            <th>Operation</th>
             <th>Quantity</th>
             <th>Price</th>
             <th>Fee</th>
             <th>Total USDT</th>
-            <th>Source</th>
+            <th>Wallet</th>
             <th></th>
           </tr>
         </thead>
@@ -70,7 +68,7 @@
               <td>{{ formatCurrency(tx.priceAtTime) }}</td>
               <td class="text-secondary">{{ tx.fee > 0 ? formatCurrency(tx.fee) : '—' }}</td>
               <td>{{ formatCurrency(tx.totalValue) }}</td>
-              <td class="text-secondary">{{ tx.walletId.slice(0, 8) }}…</td>
+              <td class="text-secondary">{{ tx.walletName }}</td>
               <td class="row-actions">
                 <button class="icon-btn" title="Edit transaction" (click)="openEditModal(tx)">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -108,7 +106,7 @@
       <input class="form-input" type="text" placeholder="BTC" [value]="form.symbol()" (input)="form.symbol.set($any($event.target).value)" />
     </div>
     <div class="form-group">
-      <label>Side</label>
+      <label>Operation</label>
       <div class="toggle-group">
         <button class="toggle-btn" [class.active]="form.type() === 'buy'" (click)="form.type.set('buy')">Buy</button>
         <button class="toggle-btn" [class.active]="form.type() === 'sell'" (click)="form.type.set('sell')">Sell</button>
@@ -127,8 +125,8 @@
       <input class="form-input" type="number" min="0" step="any" placeholder="1.50" [value]="form.fee()" (input)="form.fee.set($any($event.target).value)" />
     </div>
     <div class="form-group">
-      <label>Date &amp; Time</label>
-      <input class="form-input" type="datetime-local" [value]="form.executedAt()" (input)="form.executedAt.set($any($event.target).value)" />
+      <label>Date</label>
+      <input class="form-input" type="date" [value]="form.executedAt()" (input)="form.executedAt.set($any($event.target).value)" />
     </div>
     <div class="form-group">
       <label>Source Wallet *</label>
@@ -174,8 +172,8 @@
         (input)="editForm.fee.set($any($event.target).value)" />
     </div>
     <div class="form-group">
-      <label>Date &amp; Time</label>
-      <input class="form-input" type="datetime-local"
+      <label>Date</label>
+      <input class="form-input" type="date"
         [value]="editForm.executedAt()"
         (input)="editForm.executedAt.set($any($event.target).value)" />
     </div>

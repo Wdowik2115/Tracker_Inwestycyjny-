@@ -24,8 +24,8 @@ namespace Serwer.Controllers
             [FromQuery] int pageSize = 20,
             [FromQuery] Guid? walletId = null,
             [FromQuery] string? symbol = null,
-            [FromQuery] DateTime? startDate = null,
-            [FromQuery] DateTime? endDate = null)
+            [FromQuery] DateOnly? startDate = null,
+            [FromQuery] DateOnly? endDate = null)
         {
             var result = await _transactionService.GetPagedTransactionsAsync(
                 User.GetUserId(), page, pageSize, walletId, symbol, startDate, endDate);

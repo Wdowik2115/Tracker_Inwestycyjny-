@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { TransactionService } from '../../services/transaction.service';
 import { WalletService } from '../../services/wallet.service';
@@ -63,9 +63,22 @@ export class TransactionsComponent implements OnInit {
 
   totalPages = computed(() => Math.ceil(this.totalCount() / this.PAGE_SIZE));
 
+  constructor() {
+    // Automatically reload when filters change
+    effect(() => {
+      // Access signals to track them
+      this.filterAsset();
+      this.filterWallet();
+      this.filterStartDate();
+      this.filterEndDate();
+      this.page();
+
+      this.load();
+    });
+  }
+
   ngOnInit(): void {
     this.titleService.setTitle('Transactions — Investee');
-    this.load();
   }
 
   load(): void {
@@ -93,11 +106,6 @@ export class TransactionsComponent implements OnInit {
         this.loading.set(false); 
       }
     });
-  }
-
-  applyFilters(): void {
-    this.page.set(1);
-    this.load();
   }
 
   openAddModal(): void {
@@ -163,7 +171,7 @@ export class TransactionsComponent implements OnInit {
     this.editForm.priceAtTime.set(String(tx.priceAtTime));
     this.editForm.fee.set(String(tx.fee));
     this.editForm.feeCurrency.set(tx.feeCurrency);
-    this.editForm.executedAt.set(tx.executedAt ? new Date(tx.executedAt).toISOString().slice(0, 16) : '');
+    this.editForm.executedAt.set(tx.executedAt ? tx.executedAt : '');
     this.editForm.notes.set(tx.notes ?? '');
     this.editForm.costBasisPerUnit.set(tx.costBasisPerUnit != null ? String(tx.costBasisPerUnit) : '');
     this.editModalOpen.set(true);
