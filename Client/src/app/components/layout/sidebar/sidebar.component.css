@@ -96,6 +96,11 @@
   text-align: left;
   transition: background 0.15s;
   margin-bottom: 2px;
+  text-decoration: none;
+  color: inherit;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
 .source-card:hover {
@@ -103,7 +108,7 @@
 }
 
 .source-card--active {
-  background: rgba(245, 166, 35, 0.08);
+  background: rgba(245, 166, 35, 0.08) !important;
 }
 
 .source-icon {

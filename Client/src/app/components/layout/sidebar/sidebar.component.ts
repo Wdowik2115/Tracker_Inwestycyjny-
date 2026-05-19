@@ -1,14 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { timer, merge, Subject } from 'rxjs';
+import { switchMap, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { WalletService } from '../../../services/wallet.service';
 import { PortfolioService } from '../../../services/portfolio.service';
+import { TransactionService } from '../../../services/transaction.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
@@ -16,9 +19,23 @@ export class SidebarComponent {
   public authService = inject(AuthService);
   private walletService = inject(WalletService);
   private portfolioService = inject(PortfolioService);
+  private transactionService = inject(TransactionService);
 
-  wallets = toSignal(this.walletService.getWallets(), { initialValue: [] });
-  portfolio = toSignal(this.portfolioService.getSummary(), { initialValue: null });
+  // Refresh every 30 seconds OR when a transaction is added
+  private refreshTrigger$ = merge(
+    timer(0, 30000),
+    this.transactionService.transactionAdded$
+  );
+
+  wallets = toSignal(
+    this.refreshTrigger$.pipe(switchMap(() => this.walletService.getWallets())),
+    { initialValue: [] }
+  );
+  
+  portfolio = toSignal(
+    this.refreshTrigger$.pipe(switchMap(() => this.portfolioService.getSummary())),
+    { initialValue: null }
+  );
 
   currentUser = this.authService.currentUser;
 
