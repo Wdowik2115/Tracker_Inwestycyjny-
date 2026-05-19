@@ -10,6 +10,8 @@ namespace Investe.Application.DTOs
         public decimal Quantity { get; set; }
         public decimal PriceAtTime { get; set; }
         public decimal TotalValue { get; set; }
+        public decimal Fee { get; set; }
+        public string FeeCurrency { get; set; } = string.Empty;
         public decimal? CostBasisPerUnit { get; set; }
         public string? CostBasisSource { get; set; }
         public DateTime ExecutedAt { get; set; }

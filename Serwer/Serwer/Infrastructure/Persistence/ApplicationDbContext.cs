@@ -63,6 +63,7 @@ namespace Investe.Infrastructure.Persistence
                 e.Property(t => t.Quantity).HasPrecision(18, 8);
                 e.Property(t => t.PriceAtTime).HasPrecision(18, 8);
                 e.Property(t => t.TotalValue).HasPrecision(18, 8);
+                e.Property(t => t.Fee).HasPrecision(18, 8);
                 e.Property(t => t.CostBasisPerUnit).HasPrecision(18, 8);
             });
 

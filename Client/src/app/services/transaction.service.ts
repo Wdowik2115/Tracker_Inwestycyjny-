@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TransactionDto, TransactionCreateDto, TransactionUpdateDto } from '../models';
 import { environment } from '../../environments/environment';
@@ -12,8 +12,25 @@ export class TransactionService {
 
   constructor(private http: HttpClient) {}
 
-  getTransactions(): Observable<TransactionDto[]> {
-    return this.http.get<TransactionDto[]>(this.apiUrl);
+  getTransactions(params?: { 
+    page?: number; 
+    pageSize?: number; 
+    walletId?: string; 
+    symbol?: string; 
+    startDate?: string; 
+    endDate?: string; 
+  }): Observable<{ items: TransactionDto[]; totalCount: number }> {
+    let httpParams = new HttpParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+
+    return this.http.get<{ items: TransactionDto[]; totalCount: number }>(this.apiUrl, { params: httpParams });
   }
 
   addTransaction(dto: TransactionCreateDto): Observable<TransactionDto> {

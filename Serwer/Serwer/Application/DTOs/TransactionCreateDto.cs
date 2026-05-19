@@ -28,6 +28,12 @@ namespace Investe.Application.DTOs
         public decimal PriceAtTime { get; set; }
 
         [Range(0, double.MaxValue)]
+        public decimal Fee { get; set; } = 0;
+
+        [StringLength(10)]
+        public string FeeCurrency { get; set; } = "USDT";
+
+        [Range(0, double.MaxValue)]
         public decimal? CostBasisPerUnit { get; set; }
 
         public DateTime? ExecutedAt { get; set; }

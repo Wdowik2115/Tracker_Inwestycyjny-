@@ -4,19 +4,25 @@
     <button class="btn-primary" (click)="openAddModal()">+ Add Transaction</button>
   </div>
 
-  <!-- Filter bar -->
   <div class="filter-bar">
     <input
       class="filter-input"
       type="text"
-      placeholder="Filter by asset…"
+      placeholder="Asset (BTC)…"
       [value]="filterAsset()"
-      (input)="filterAsset.set($any($event.target).value); page.set(0)" />
-    <div class="filter-tabs">
-      <button class="filter-tab" [class.active]="filterSide() === 'all'" (click)="filterSide.set('all'); page.set(0)">All</button>
-      <button class="filter-tab" [class.active]="filterSide() === 'buy'" (click)="filterSide.set('buy'); page.set(0)">Buy</button>
-      <button class="filter-tab" [class.active]="filterSide() === 'sell'" (click)="filterSide.set('sell'); page.set(0)">Sell</button>
-    </div>
+      (input)="filterAsset.set($any($event.target).value)" />
+    
+    <select class="filter-input" [value]="filterWallet()" (change)="filterWallet.set($any($event.target).value)">
+      <option value="">All Wallets</option>
+      @for (w of wallets(); track w.id) {
+        <option [value]="w.id">{{ w.name }}</option>
+      }
+    </select>
+
+    <input class="filter-input" type="date" [value]="filterStartDate()" (input)="filterStartDate.set($any($event.target).value)" title="Start Date" />
+    <input class="filter-input" type="date" [value]="filterEndDate()" (input)="filterEndDate.set($any($event.target).value)" title="End Date" />
+
+    <button class="btn-secondary" (click)="applyFilters()">Search</button>
   </div>
 
   <!-- Loading -->
@@ -27,7 +33,7 @@
   }
 
   <!-- Empty -->
-  @else if (filtered().length === 0) {
+  @else if (transactions().length === 0) {
     <div class="empty-state">
       <p>No transactions found.</p>
     </div>
@@ -44,14 +50,14 @@
             <th>Side</th>
             <th>Quantity</th>
             <th>Price</th>
+            <th>Fee</th>
             <th>Total USDT</th>
             <th>Source</th>
-            <th>Cost Basis</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          @for (tx of paged(); track tx.id) {
+          @for (tx of transactions(); track tx.id) {
             <tr>
               <td class="text-secondary">{{ formatDate(tx.executedAt) }}</td>
               <td class="asset-cell">{{ tx.symbol }}</td>
@@ -62,9 +68,9 @@
               </td>
               <td>{{ tx.quantity }}</td>
               <td>{{ formatCurrency(tx.priceAtTime) }}</td>
+              <td class="text-secondary">{{ tx.fee > 0 ? formatCurrency(tx.fee) : '—' }}</td>
               <td>{{ formatCurrency(tx.totalValue) }}</td>
               <td class="text-secondary">{{ tx.walletId.slice(0, 8) }}…</td>
-              <td class="text-secondary">{{ tx.costBasisSource ?? '—' }}</td>
               <td class="row-actions">
                 <button class="icon-btn" title="Edit transaction" (click)="openEditModal(tx)">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -86,9 +92,9 @@
     <!-- Pagination -->
     @if (totalPages() > 1) {
       <div class="pagination">
-        <button class="page-btn" [disabled]="page() === 0" (click)="prevPage()">← Prev</button>
-        <span class="page-info text-secondary">{{ page() + 1 }} / {{ totalPages() }}</span>
-        <button class="page-btn" [disabled]="page() >= totalPages() - 1" (click)="nextPage()">Next →</button>
+        <button class="page-btn" [disabled]="page() === 1" (click)="prevPage()">← Prev</button>
+        <span class="page-info text-secondary">{{ page() }} / {{ totalPages() }}</span>
+        <button class="page-btn" [disabled]="page() >= totalPages()" (click)="nextPage()">Next →</button>
       </div>
     }
   }
@@ -115,6 +121,10 @@
     <div class="form-group">
       <label>Price per Unit *</label>
       <input class="form-input" type="number" min="0" step="any" placeholder="45000" [value]="form.priceAtTime()" (input)="form.priceAtTime.set($any($event.target).value)" />
+    </div>
+    <div class="form-group">
+      <label>Fee</label>
+      <input class="form-input" type="number" min="0" step="any" placeholder="1.50" [value]="form.fee()" (input)="form.fee.set($any($event.target).value)" />
     </div>
     <div class="form-group">
       <label>Date &amp; Time</label>
@@ -146,10 +156,22 @@
 <app-modal title="Edit Transaction" [isOpen]="editModalOpen()" (closed)="closeEditModal()">
   <div class="form-grid">
     <div class="form-group">
+      <label>Quantity *</label>
+      <input class="form-input" type="number" min="0" step="any"
+        [value]="editForm.quantity()"
+        (input)="editForm.quantity.set($any($event.target).value)" />
+    </div>
+    <div class="form-group">
       <label>Price per Unit *</label>
       <input class="form-input" type="number" min="0" step="any"
         [value]="editForm.priceAtTime()"
         (input)="editForm.priceAtTime.set($any($event.target).value)" />
+    </div>
+    <div class="form-group">
+      <label>Fee</label>
+      <input class="form-input" type="number" min="0" step="any"
+        [value]="editForm.fee()"
+        (input)="editForm.fee.set($any($event.target).value)" />
     </div>
     <div class="form-group">
       <label>Date &amp; Time</label>

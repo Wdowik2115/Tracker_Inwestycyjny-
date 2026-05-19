@@ -10,6 +10,16 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Returns all transactions across all wallets owned by the user.</summary>
         Task<IEnumerable<TransactionDto>> GetUserTransactionsAsync(Guid userId);
 
+        /// <summary>Returns a paged and filtered list of transactions.</summary>
+        Task<(IEnumerable<TransactionDto> Items, int TotalCount)> GetPagedTransactionsAsync(
+            Guid userId, 
+            int page, 
+            int pageSize, 
+            Guid? walletId = null, 
+            string? symbol = null, 
+            DateTime? startDate = null, 
+            DateTime? endDate = null);
+
         /// <summary>Deletes a transaction owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteTransactionAsync(Guid userId, Guid transactionId);
 

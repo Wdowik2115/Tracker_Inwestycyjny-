@@ -27,6 +27,8 @@ namespace Investe.Application.Mappings
                 Quantity = t.Quantity,
                 PriceAtTime = t.PriceAtTime,
                 TotalValue = t.TotalValue,
+                Fee = t.Fee,
+                FeeCurrency = t.FeeCurrency,
                 CostBasisPerUnit = t.CostBasisPerUnit,
                 CostBasisSource = t.CostBasisSource,
                 ExecutedAt = t.ExecutedAt,

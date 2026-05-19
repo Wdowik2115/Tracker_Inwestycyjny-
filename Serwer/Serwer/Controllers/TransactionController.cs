@@ -19,10 +19,23 @@ namespace Serwer.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTransactions()
+        public async Task<IActionResult> GetTransactions(
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 20,
+            [FromQuery] Guid? walletId = null,
+            [FromQuery] string? symbol = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
         {
-            var transactions = await _transactionService.GetUserTransactionsAsync(User.GetUserId());
-            return Ok(transactions);
+            var result = await _transactionService.GetPagedTransactionsAsync(
+                User.GetUserId(), page, pageSize, walletId, symbol, startDate, endDate);
+            
+            return Ok(new { 
+                items = result.Items, 
+                totalCount = result.TotalCount,
+                page,
+                pageSize
+            });
         }
 
         [HttpPost]
