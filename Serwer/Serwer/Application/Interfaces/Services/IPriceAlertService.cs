@@ -19,6 +19,9 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Deletes an alert owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteAlertAsync(Guid userId, Guid alertId);
 
+        /// <summary>Resets a triggered alert so it can be reused. Clears IsTriggered and TriggeredAt. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        Task<AlertDto> ResetAlertAsync(Guid userId, Guid alertId);
+
         /// <summary>Checks all active alerts against current prices and marks triggered ones.</summary>
         Task CheckAndTriggerAlertsAsync();
     }

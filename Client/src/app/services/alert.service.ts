@@ -31,4 +31,8 @@ export class AlertService {
   deleteAlert(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  resetAlert(id: string): Observable<AlertDto> {
+    return this.http.post<AlertDto>(`${this.apiUrl}/${id}/reset`, {});
+  }
 }

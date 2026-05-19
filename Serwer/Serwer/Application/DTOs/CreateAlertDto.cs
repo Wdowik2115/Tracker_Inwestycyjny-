@@ -10,7 +10,7 @@ namespace Investe.Application.DTOs
         public string Symbol { get; set; } = string.Empty;
 
         [Required]
-        [Range(0, double.MaxValue)]
+        [Range(0.0001, double.MaxValue)]
         public decimal TargetPrice { get; set; }
 
         [Required]

@@ -77,8 +77,8 @@ namespace Investe.Application.Services
 
             if (dto.TargetPrice.HasValue)
             {
-                if (dto.TargetPrice.Value <= 0)
-                    throw new ArgumentException("TargetPrice must be greater than 0.");
+                if (dto.TargetPrice.Value <= 0.0001m)
+                    throw new ArgumentException("TargetPrice must be greater than 0.0001.");
                 alert.TargetPrice = dto.TargetPrice.Value;
             }
 
@@ -103,6 +103,25 @@ namespace Investe.Application.Services
 
             await _unitOfWork.PriceAlerts.DeleteAsync(alert);
             await _unitOfWork.CompleteAsync();
+        }
+
+        /// <summary>Resets a triggered alert so it can be reused. Clears IsTriggered and TriggeredAt. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
+        public async Task<AlertDto> ResetAlertAsync(Guid userId, Guid alertId)
+        {
+            var alert = await _unitOfWork.PriceAlerts.GetByIdAsync(alertId)
+                ?? throw new KeyNotFoundException($"Alert {alertId} not found.");
+
+            if (alert.UserId != userId)
+                throw new UnauthorizedAccessException("Alert does not belong to this user.");
+
+            alert.IsTriggered = false;
+            alert.TriggeredAt = null;
+
+            await _unitOfWork.PriceAlerts.UpdateAsync(alert);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Alert {AlertId} reset for user {UserId}", alert.Id, userId);
+            return alert.ToDto();
         }
 
         /// <summary>Checks all active alerts against current prices and marks triggered ones.</summary>

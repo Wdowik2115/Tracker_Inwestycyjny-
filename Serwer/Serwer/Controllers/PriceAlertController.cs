@@ -165,5 +165,36 @@ namespace Serwer.Controllers
                 return Forbid();
             }
         }
+
+        /// <summary>
+        /// Reset a triggered alert so it can be reused.
+        /// </summary>
+        /// <param name="id">The alert ID (GUID)</param>
+        /// <returns>The reset alert</returns>
+        /// <response code="200">Alert reset successfully</response>
+        /// <response code="401">Unauthorized - missing or invalid JWT token</response>
+        /// <response code="403">Forbidden - alert belongs to a different user</response>
+        /// <response code="404">Not Found - alert does not exist</response>
+        [HttpPost("{id:guid}/reset")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ResetAlert(Guid id)
+        {
+            try
+            {
+                var alert = await _alertService.ResetAlertAsync(UserId, id);
+                return Ok(alert);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { message = "Alert not found" });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
     }
 }
