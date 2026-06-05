@@ -9,6 +9,6 @@ namespace Investe.Domain.Entities
         public decimal Quantity { get; set; }
         public decimal AverageBuyPrice { get; set; }
         public Guid WalletId { get; set; }
-        public virtual Wallet Wallet { get; set; } = null!;
+        public Wallet Wallet { get; set; } = null!;
     }
 }
