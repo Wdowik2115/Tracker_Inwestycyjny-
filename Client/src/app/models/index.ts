@@ -161,3 +161,14 @@ export interface UpdateAlertDto {
   targetPrice?: number;
   direction?: AlertDirection;
 }
+
+// Report models
+export interface ReportDto {
+  id: string;
+  title: string;
+  fileName: string;
+  type: string;
+  walletName?: string;
+  fileSizeBytes: number;
+  generatedAt: string;
+}
