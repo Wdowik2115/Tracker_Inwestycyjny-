@@ -52,7 +52,7 @@ namespace Serwer.Tests.Application.Services
             Wallet? added = null;
             walletRepo.Setup(r => r.AddAsync(It.IsAny<Wallet>()))
                 .Callback<Wallet>(w => added = w)
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync((Wallet w) => w);
 
             var result = await sut.CreateWalletAsync(userId, dto);
 
@@ -75,7 +75,7 @@ namespace Serwer.Tests.Application.Services
             Wallet? added = null;
             walletRepo.Setup(r => r.AddAsync(It.IsAny<Wallet>()))
                 .Callback<Wallet>(w => added = w)
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync((Wallet w) => w);
 
             await sut.CreateWalletAsync(userId, dto);
 
