@@ -10,6 +10,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
         IPriceAlertRepository PriceAlerts { get; }
         IUserRepository Users { get; }
         IPriceHistoryCacheRepository PriceHistory { get; }
+        IReportRepository Reports { get; }
         Task<int> CompleteAsync();
     }
 }
