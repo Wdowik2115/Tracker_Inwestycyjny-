@@ -15,6 +15,7 @@ namespace Investe.Infrastructure.Persistence
         public DbSet<Transaction> Transactions { get; set; } = null!;
         public DbSet<PriceAlert> PriceAlerts { get; set; } = null!;
         public DbSet<PriceHistoryCache> PriceHistoryCache { get; set; } = null!;
+        public DbSet<Report> Reports { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -87,6 +88,22 @@ namespace Investe.Infrastructure.Persistence
                 e.Property(p => p.Id).ValueGeneratedOnAdd();
                 e.HasIndex(p => new { p.CoinId, p.Date }).IsUnique();
                 e.Property(p => p.PriceUsd).HasPrecision(18, 8);
+            });
+
+            // Report
+            modelBuilder.Entity<Report>(e =>
+            {
+                e.HasKey(r => r.Id);
+                e.Property(r => r.Id).ValueGeneratedOnAdd();
+                e.Property(r => r.Content).HasColumnType("varbinary(max)");
+                e.HasOne(r => r.User)
+                    .WithMany()
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(r => r.Wallet)
+                    .WithMany()
+                    .HasForeignKey(r => r.WalletId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
         }
     }

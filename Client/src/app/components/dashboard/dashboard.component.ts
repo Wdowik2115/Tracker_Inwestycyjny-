@@ -9,6 +9,7 @@ import { WalletService } from '../../services/wallet.service';
 import { TransactionService } from '../../services/transaction.service';
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
+import { ReportService } from '../../services/report.service';
 import { WalletDto } from '../../models';
 
 interface WalletCardData {
@@ -29,6 +30,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private transactionService = inject(TransactionService);
   private userService = inject(UserService);
   private toastService = inject(ToastService);
+  private reportService = inject(ReportService);
   private titleService = inject(Title);
 
   private refreshSub?: Subscription;
@@ -36,6 +38,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = signal(true);
   walletCards = signal<WalletCardData[]>([]);
   currency = signal('USD');
+  generatingReport = signal(false);
 
   readonly sparklineChart: ApexChart = {
     type: 'area',
@@ -112,5 +115,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   formatPercent(v: number): string {
     return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+  }
+
+  generateReport(): void {
+    this.generatingReport.set(true);
+    this.reportService.generateAccountReport().subscribe({
+      next: report => {
+        this.reportService.downloadReport(report.id).subscribe({
+          next: blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${report.title}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.toastService.success('Account report downloaded.');
+            this.generatingReport.set(false);
+          },
+          error: () => {
+            this.toastService.error('Report generated but download failed. Find it in Reports.');
+            this.generatingReport.set(false);
+          }
+        });
+      },
+      error: e => {
+        this.toastService.error(e.error?.message ?? 'Failed to generate report');
+        this.generatingReport.set(false);
+      }
+    });
   }
 }

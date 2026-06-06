@@ -4,7 +4,7 @@ namespace Investe.Domain.Entities
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid UserId { get; set; }
-        public virtual User User { get; set; } = null!;
+        public User User { get; set; } = null!;
         public string CoinId { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
         public decimal TargetPrice { get; set; }

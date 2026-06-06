@@ -12,6 +12,7 @@ import {
 import { WalletService } from '../../../services/wallet.service';
 import { TransactionService } from '../../../services/transaction.service';
 import { ToastService } from '../../../services/toast.service';
+import { ReportService } from '../../../services/report.service';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import { WalletDetailsDto, TransactionDto, HistoryPoint } from '../../../models';
 
@@ -30,9 +31,11 @@ export class WalletDetailComponent implements OnInit, OnDestroy {
   private walletService = inject(WalletService);
   private transactionService = inject(TransactionService);
   private toastService = inject(ToastService);
+  private reportService = inject(ReportService);
   private titleService = inject(Title);
 
   wallet = signal<WalletDetailsDto | null>(null);
+  generatingReport = signal(false);
   history = signal<HistoryPoint[]>([]);
   transactions = signal<TransactionDto[]>([]);
   loading = signal(true);
@@ -260,5 +263,35 @@ export class WalletDetailComponent implements OnInit, OnDestroy {
 
   formatQuantity(qty: number): string {
     return qty.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 });
+  }
+
+  generateReport(): void {
+    const w = this.wallet();
+    if (!w) return;
+    this.generatingReport.set(true);
+    this.reportService.generateWalletReport(w.id).subscribe({
+      next: report => {
+        this.reportService.downloadReport(report.id).subscribe({
+          next: blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${report.title}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.toastService.success('Report downloaded.');
+            this.generatingReport.set(false);
+          },
+          error: () => {
+            this.toastService.error('Report generated but download failed. Find it in Reports.');
+            this.generatingReport.set(false);
+          }
+        });
+      },
+      error: e => {
+        this.toastService.error(e.error?.message ?? 'Failed to generate report');
+        this.generatingReport.set(false);
+      }
+    });
   }
 }

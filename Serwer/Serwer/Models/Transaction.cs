@@ -16,6 +16,6 @@ namespace Investe.Domain.Entities
         public DateTime ExecutedAt { get; set; } = DateTime.UtcNow;
         public string Notes { get; set; } = string.Empty;
         public Guid WalletId { get; set; }
-        public virtual Wallet Wallet { get; set; } = null!;
+        public Wallet Wallet { get; set; } = null!;
     }
 }

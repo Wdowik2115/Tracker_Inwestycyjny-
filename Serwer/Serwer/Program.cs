@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using Serwer.BackgroundServices;
 using Serwer.Middleware;
 
@@ -19,6 +20,8 @@ namespace Serwer
     {
         public static void Main(string[] args)
         {
+            QuestPDF.Settings.License = LicenseType.Community;
+
             var builder = WebApplication.CreateBuilder(args);
 
             // ── CORS ──────────────────────────────────────────────────────────
@@ -67,6 +70,7 @@ namespace Serwer
             builder.Services.AddScoped<IPriceAlertService, PriceAlertService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IReportService, ReportService>();
 
             // ── Background Services ───────────────────────────────────────────
             builder.Services.AddHostedService<PriceAlertBackgroundService>();

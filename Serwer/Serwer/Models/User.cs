@@ -9,7 +9,7 @@ namespace Investe.Domain.Entities
         public string? LastName { get; set; }
         public string PreferredCurrency { get; set; } = "USD";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
-        public virtual ICollection<PriceAlert> PriceAlerts { get; set; } = new List<PriceAlert>();
+        public ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+        public ICollection<PriceAlert> PriceAlerts { get; set; } = new List<PriceAlert>();
     }
 }
