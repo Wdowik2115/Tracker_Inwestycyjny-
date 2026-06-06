@@ -172,3 +172,17 @@ export interface ReportDto {
   fileSizeBytes: number;
   generatedAt: string;
 }
+
+// Watchlist models
+export interface WatchlistItemDto {
+  id: string;
+  coinId: string;
+  symbol: string;
+  currentPrice: number;
+  addedAt: string;
+}
+
+export interface AddToWatchlistDto {
+  coinId: string;
+  symbol: string;
+}

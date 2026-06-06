@@ -1,0 +1,91 @@
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">Watchlist</h1>
+    <div class="header-actions">
+      <!-- We use the same button style as in Transactions -->
+      <button class="btn-primary" (click)="addToWatchlist()" [disabled]="adding() || !newCoinSymbol()">
+        @if (adding()) {
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        } @else {
+          + Add to Watchlist
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- The input is placed in a filter-bar to match the Transactions aesthetic -->
+  <div class="filter-bar">
+    <div class="autocomplete-wrapper">
+      <input 
+        type="text" 
+        class="filter-input" 
+        placeholder="Enter Coin Symbol (e.g. BTC, ETH)..." 
+        [ngModel]="newCoinSymbol()"
+        (ngModelChange)="onSymbolInput($event)"
+        (keyup.enter)="addToWatchlist()"
+        (blur)="suggestions.set([])"
+        [disabled]="adding()">
+      
+      @if (suggestions().length > 0) {
+        <ul class="suggestions-list">
+          @for (s of suggestions(); track s) {
+            <li (mousedown)="selectSuggestion(s)">{{ s }}</li>
+          }
+        </ul>
+      }
+    </div>
+    
+    <div class="text-secondary small ms-2" style="align-self: center;">
+      {{ watchlist().length }} assets monitored
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  } @else if (watchlist().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-eye"></i></div>
+      <p>Your watchlist is empty. Add symbols above to start monitoring.</p>
+    </div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Current Price</th>
+            <th>Added At</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of watchlist(); track item.id) {
+            <tr>
+              <td class="asset-cell">
+                <span class="asset-symbol">{{ item.symbol }}</span>
+                <span class="text-secondary small text-uppercase ms-2">{{ item.coinId }}</span>
+              </td>
+              <td class="price-cell">
+                {{ formatCurrency(item.currentPrice) }}
+              </td>
+              <td class="text-secondary">
+                {{ formatDate(item.addedAt) }}
+              </td>
+              <td class="row-actions text-end">
+                <button class="icon-btn icon-btn--danger" (click)="removeFromWatchlist(item.id)" title="Remove from watchlist">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -23,7 +23,14 @@ namespace Investe.Application.Services
             ["AVAX"]  = "avalanche-2",
             ["MATIC"] = "matic-network",
             ["LINK"]  = "chainlink",
-            ["XRP"]   = "ripple"
+            ["XRP"]   = "ripple",
+            ["DOGE"]  = "dogecoin",
+            ["SHIB"]  = "shiba-inu",
+            ["DAI"]   = "dai",
+            ["LTC"]   = "litecoin",
+            ["BCH"]   = "bitcoin-cash",
+            ["UNI"]   = "uniswap",
+            ["NEAR"]  = "near"
         };
 
         private readonly IHttpClientFactory _httpClientFactory;
@@ -138,6 +145,11 @@ namespace Investe.Application.Services
             }
 
             return result;
+        }
+
+        public Task<Dictionary<string, string>> GetSupportedCoinsAsync()
+        {
+            return Task.FromResult(new Dictionary<string, string>(SymbolToId));
         }
 
         /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>

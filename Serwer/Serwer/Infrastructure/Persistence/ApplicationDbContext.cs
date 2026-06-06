@@ -16,6 +16,7 @@ namespace Investe.Infrastructure.Persistence
         public DbSet<PriceAlert> PriceAlerts { get; set; } = null!;
         public DbSet<PriceHistoryCache> PriceHistoryCache { get; set; } = null!;
         public DbSet<Report> Reports { get; set; } = null!;
+        public DbSet<WatchlistItem> Watchlist { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -104,6 +105,17 @@ namespace Investe.Infrastructure.Persistence
                     .WithMany()
                     .HasForeignKey(r => r.WalletId)
                     .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // Watchlist
+            modelBuilder.Entity<WatchlistItem>(e =>
+            {
+                e.HasKey(w => w.Id);
+                e.Property(w => w.Id).ValueGeneratedOnAdd();
+                e.HasOne(w => w.User)
+                    .WithMany(u => u.WatchlistItems)
+                    .HasForeignKey(w => w.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
