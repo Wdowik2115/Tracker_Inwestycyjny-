@@ -1,156 +1,171 @@
 .page {
-  max-width: 100%;
+  max-width: 1200px;
 }
 
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .page-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .center {
   display: flex;
   justify-content: center;
-  padding: 60px 0;
+  padding: 80px 0;
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 0;
+  padding: 100px 20px;
   color: var(--text-secondary);
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .table-container {
-  overflow-x: auto;
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  animation: fadeInUp 1s ease-out both;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
 }
 
 .data-table th {
   text-align: left;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
-  letter-spacing: 0.6px;
-  padding: 8px 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border);
 }
 
 .data-table td {
-  padding: 12px;
+  padding: 18px 24px;
   border-bottom: 1px solid var(--border);
-  vertical-align: middle;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.data-table tbody tr {
+  transition: background 0.2s;
 }
 
 .data-table tbody tr:hover {
-  background: var(--surface-hover, rgba(255,255,255,0.03));
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .td-title {
-  font-weight: 500;
-  max-width: 260px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .td-wallet {
   color: var(--text-secondary);
+  font-weight: 600;
 }
 
-.td-size {
+.td-size, .td-date {
   color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.td-date {
-  color: var(--text-secondary);
-  white-space: nowrap;
+  font-size: 13px;
 }
 
 .td-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   justify-content: flex-end;
 }
 
 .type-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .type-badge.account {
-  background: rgba(37, 99, 235, 0.15);
+  background: rgba(96, 165, 250, 0.1);
   color: #60a5fa;
 }
 
 .type-badge.wallet {
-  background: rgba(22, 163, 74, 0.15);
+  background: rgba(74, 222, 128, 0.1);
   color: #4ade80;
 }
 
 .btn-download {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  background: rgba(37, 99, 235, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(37, 99, 235, 0.3);
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #000;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s;
+  border: none;
 }
 
 .btn-download:hover {
-  background: rgba(37, 99, 235, 0.25);
+  background: var(--accent-hover);
+  transform: translateY(-2px);
 }
 
 .btn-download svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .btn-delete {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: transparent;
+  width: 36px;
+  height: 36px;
+  background: rgba(231, 76, 60, 0.05);
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition: all 0.2s;
 }
 
 .btn-delete:hover {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(231, 76, 60, 0.1);
 }
 
-.btn-delete:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-delete svg {
-  width: 14px;
-  height: 14px;
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

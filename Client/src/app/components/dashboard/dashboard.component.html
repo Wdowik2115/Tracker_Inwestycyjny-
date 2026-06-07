@@ -40,8 +40,8 @@
     </div>
   } @else {
     <div class="wallets-grid">
-      @for (card of walletCards(); track card.wallet.id) {
-        <div class="wallet-card">
+      @for (card of walletCards(); track card.wallet.id; let idx = $index) {
+        <div class="wallet-card" [style.animation-delay]="(idx * 0.1) + 's'">
           <div class="card-header">
             <span class="card-name">{{ card.wallet.name }}</span>
             <div class="card-header-right">

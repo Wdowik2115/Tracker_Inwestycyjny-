@@ -5,10 +5,14 @@ import { PortfolioService } from '../../../services/portfolio.service';
 import { TransactionService } from '../../../services/transaction.service';
 import { UserService } from '../../../services/user.service';
 import { PortfolioSummaryDto } from '../../../models';
+import { AuthService } from '../../../services/auth.service';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-portfolio-header',
   standalone: true,
+  imports: [CommonModule, RouterLink],
   templateUrl: './portfolio-header.component.html',
   styleUrl: './portfolio-header.component.css'
 })
@@ -16,6 +20,7 @@ export class PortfolioHeaderComponent implements OnInit, OnDestroy {
   private portfolioService = inject(PortfolioService);
   private transactionService = inject(TransactionService);
   private userService = inject(UserService);
+  public authService = inject(AuthService);
 
   private refreshSub?: Subscription;
 
@@ -24,6 +29,12 @@ export class PortfolioHeaderComponent implements OnInit, OnDestroy {
   hideValues = signal(false);
 
   ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.loadData();
+    }
+  }
+
+  loadData() {
     this.userService.getProfile().subscribe({
       next: u => this.currency.set(u.preferredCurrency),
       error: () => {}
@@ -38,6 +49,10 @@ export class PortfolioHeaderComponent implements OnInit, OnDestroy {
       next: data => this.portfolio.set(data),
       error: () => {}
     });
+  }
+
+  logout() {
+    this.authService.logout();
   }
 
   ngOnDestroy(): void {

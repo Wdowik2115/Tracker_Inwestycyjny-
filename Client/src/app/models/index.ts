@@ -172,3 +172,12 @@ export interface ReportDto {
   fileSizeBytes: number;
   generatedAt: string;
 }
+
+// Chat models
+export interface ChatMessageDto {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+

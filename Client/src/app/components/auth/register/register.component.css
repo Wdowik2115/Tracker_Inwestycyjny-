@@ -74,7 +74,7 @@
   font-size: 38px;
   font-weight: 800;
   margin: 0;
-  letter-spacing: -1.5px;
+  letter-spacing: -1px;
 }
 
 .logo-section p {
@@ -238,14 +238,3 @@
   font-weight: 500;
   animation: fadeIn 0.3s ease-out;
 }
-
-/* Animations */
-.animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
-.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-.animate-slide-up { animation: slideUp 0.8s ease-out 0.2s both; }
-.animate-text-glow { animation: textGlow 3s ease-in-out infinite alternate; }
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes textGlow { from { text-shadow: 0 0 5px rgba(245, 166, 35, 0); } to { text-shadow: 0 0 20px rgba(245, 166, 35, 0.6); } }
