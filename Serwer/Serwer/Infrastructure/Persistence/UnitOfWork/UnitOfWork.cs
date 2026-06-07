@@ -17,6 +17,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
             Users = new UserRepository(_context);
             PriceHistory = new PriceHistoryCacheRepository(_context);
             Reports = new ReportRepository(_context);
+            Watchlist = new WatchlistRepository(_context);
         }
 
         public IWalletRepository Wallets { get; private set; }
@@ -26,6 +27,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
         public IUserRepository Users { get; private set; }
         public IPriceHistoryCacheRepository PriceHistory { get; private set; }
         public IReportRepository Reports { get; private set; }
+        public IWatchlistRepository Watchlist { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

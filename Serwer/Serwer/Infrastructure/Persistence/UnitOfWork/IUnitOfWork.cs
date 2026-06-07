@@ -11,6 +11,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
         IUserRepository Users { get; }
         IPriceHistoryCacheRepository PriceHistory { get; }
         IReportRepository Reports { get; }
+        IWatchlistRepository Watchlist { get; }
         Task<int> CompleteAsync();
     }
 }

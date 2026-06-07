@@ -1,0 +1,204 @@
+/* 
+   Direct copy of Transaction component styles for 100% consistency 
+   Variables like --bg-card, --border, --accent are defined in styles.css
+*/
+
+.page {
+  width: 100%;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Matching Transaction Filter Bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  flex: 1;
+  max-width: 300px; /* Constrain width for a cleaner look */
+  padding: 8px 12px;
+  background: var(--bg-card); /* Dark background from variables */
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.filter-input:focus {
+  border-color: var(--accent);
+}
+
+.filter-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Autocomplete Suggestions */
+.autocomplete-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.autocomplete-wrapper .filter-input {
+  width: 100%;
+  max-width: none;
+}
+
+.suggestions-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 4px;
+  padding: 0;
+  list-style: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.suggestions-list li {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.suggestions-list li:hover {
+  background: var(--bg-card);
+  color: var(--accent);
+}
+
+/* Loading & Empty States */
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+/* Table styles - exact match to Transactions */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr {
+  background: var(--bg-card);
+  transition: background 0.12s;
+}
+
+.data-table tbody tr:hover {
+  background: #1e2a40; /* Hover color from Transactions */
+}
+
+.asset-cell {
+  font-weight: 600;
+}
+
+.price-cell {
+  font-weight: 500;
+}
+
+/* Row action buttons (Delete) */
+.row-actions {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.icon-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.icon-btn--danger:hover {
+  background: rgba(231, 76, 60, 0.12); /* Matching Transactions danger hover */
+  color: var(--danger);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.ms-2 {
+  margin-left: 0.5rem;
+}

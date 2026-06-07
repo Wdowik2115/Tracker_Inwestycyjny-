@@ -61,6 +61,7 @@ namespace Serwer
             builder.Services.AddScoped<IPriceAlertRepository, PriceAlertRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IPriceHistoryCacheRepository, PriceHistoryCacheRepository>();
+            builder.Services.AddScoped<IWatchlistRepository, WatchlistRepository>();
 
             // ── Application Services ──────────────────────────────────────────
             builder.Services.AddScoped<ICoinPriceService, CoinPriceService>();
@@ -71,6 +72,7 @@ namespace Serwer
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<IWatchlistService, WatchlistService>();
 
             // ── Background Services ───────────────────────────────────────────
             builder.Services.AddHostedService<PriceAlertBackgroundService>();

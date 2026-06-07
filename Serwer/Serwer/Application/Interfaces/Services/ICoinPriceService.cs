@@ -19,5 +19,8 @@ namespace Investe.Application.Interfaces.Services
         /// Returns an empty list for unknown symbols.
         /// </summary>
         Task<List<HistoryPointDto>> GetPriceHistoryAsync(string symbol, int days);
+
+        /// <summary>Returns a list of all coins supported by the service (symbol and name/id).</summary>
+        Task<Dictionary<string, string>> GetSupportedCoinsAsync();
     }
 }

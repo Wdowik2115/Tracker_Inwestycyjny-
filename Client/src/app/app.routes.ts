@@ -8,6 +8,7 @@ import { TransactionsComponent } from './components/transactions/transactions.co
 import { AlertsComponent } from './components/alerts/alerts.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { ReportsComponent } from './components/reports/reports.component';
+import { WatchlistComponent } from './components/watchlist/watchlist.component';
 import { SharedLayoutComponent } from './components/layout/shared-layout.component';
 import { authGuard } from './guards/auth.guard';
 
@@ -23,6 +24,7 @@ export const routes: Routes = [
       { path: 'wallets', component: WalletsComponent },
       { path: 'wallets/:id', component: WalletDetailComponent },
       { path: 'transactions', component: TransactionsComponent },
+      { path: 'watchlist', component: WatchlistComponent },
       { path: 'alerts', component: AlertsComponent },
       { path: 'settings', component: SettingsComponent },
       { path: 'reports', component: ReportsComponent },
