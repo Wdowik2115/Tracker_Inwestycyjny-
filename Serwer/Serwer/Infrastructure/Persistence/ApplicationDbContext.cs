@@ -58,6 +58,9 @@ namespace Investe.Infrastructure.Persistence
                     .WithOne(t => t.Wallet)
                     .HasForeignKey(t => t.WalletId)
                     .OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(w => w.SharedWith)
+                    .WithMany(u => u.SharedWallets)
+                    .UsingEntity(j => j.ToTable("WalletShares"));
             });
 
             // Asset

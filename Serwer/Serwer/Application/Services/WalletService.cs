@@ -37,7 +37,7 @@ namespace Investe.Application.Services
             return wallet.ToDto();
         }
 
-        /// <summary>Returns all wallets belonging to the given user with their total value and P&amp;L calculated.</summary>
+        /// <summary>Returns all wallets belonging to or shared with the given user.</summary>
         public async Task<IEnumerable<WalletDto>> GetUserWalletsAsync(Guid userId)
         {
             var wallets = await _unitOfWork.Wallets.GetWalletsByUserIdAsync(userId);
@@ -62,27 +62,23 @@ namespace Investe.Application.Services
                 var pnl = totalValue - costBasis;
                 var pnlPercent = costBasis > 0 ? pnl / costBasis * 100m : 0m;
 
-                return new WalletDto
-                {
-                    Id = wallet.Id,
-                    Name = wallet.Name,
-                    Description = wallet.Description,
-                    TotalValue = totalValue,
-                    AssetCount = walletAssets.Count,
-                    Pnl = pnl,
-                    PnlPercent = pnlPercent
-                };
+                var dto = wallet.ToDto();
+                dto.TotalValue = totalValue;
+                dto.AssetCount = walletAssets.Count;
+                dto.Pnl = pnl;
+                dto.PnlPercent = pnlPercent;
+                return dto;
             });
         }
 
         /// <summary>Returns detailed information about a specific wallet, including assets and P&amp;L.</summary>
         public async Task<WalletDetailsDto> GetWalletDetailsAsync(Guid userId, Guid walletId)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
                 ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = (await _unitOfWork.Assets.GetAssetsByWalletIdAsync(walletId)).ToList();
             var prices = await _priceService.GetCurrentPricesAsync(assets.Select(a => a.Symbol));
@@ -122,11 +118,14 @@ namespace Investe.Application.Services
                 .ToList();
             var realizedPnl = CalculateRealizedPnl(allTxs);
 
+            var walletDto = wallet.ToDto();
             return new WalletDetailsDto
             {
-                Id = wallet.Id,
-                Name = wallet.Name,
-                Description = wallet.Description,
+                Id = walletDto.Id,
+                OwnerId = walletDto.OwnerId,
+                Name = walletDto.Name,
+                Description = walletDto.Description,
+                SharedWithEmails = walletDto.SharedWithEmails,
                 TotalValue = totalValue,
                 AssetCount = positions.Count,
                 Pnl = totalPnl,
@@ -139,11 +138,13 @@ namespace Investe.Application.Services
         /// <summary>Updates the name and description of a wallet owned by the user.</summary>
         public async Task<WalletDto> UpdateWalletAsync(Guid userId, Guid walletId, UpdateWalletDto dto)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
                 ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
 
+            // Allow both owner and shared users to update name/description? 
+            // Usually, only the owner should manage the wallet settings.
             if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+                throw new UnauthorizedAccessException("Only the owner can update wallet settings.");
 
             wallet.Name = dto.Name;
             wallet.Description = dto.Description ?? string.Empty;
@@ -155,15 +156,14 @@ namespace Investe.Application.Services
             return wallet.ToDto();
         }
 
-        /// <summary>Returns daily portfolio value history for a wallet over the last <paramref name="days"/> days,
-        /// replaying transactions per date so the chart reflects when assets were actually acquired.</summary>
+        /// <summary>Returns daily portfolio value history for a wallet.</summary>
         public async Task<WalletHistoryDto> GetWalletHistoryAsync(Guid userId, Guid walletId, int days)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
                 ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             // Use transactions (not current assets) so holdings are date-accurate
             var allTxs = (await _unitOfWork.Transactions.GetTransactionsByWalletIdAsync(walletId))
@@ -219,6 +219,51 @@ namespace Investe.Application.Services
             return new WalletHistoryDto { WalletId = walletId, Points = points };
         }
 
+        /// <summary>Shares a wallet with another user by their email.</summary>
+        public async Task ShareWalletAsync(Guid ownerId, Guid walletId, string email)
+        {
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
+                ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
+
+            if (wallet.UserId != ownerId)
+                throw new UnauthorizedAccessException("Only the owner can share the wallet.");
+
+            var userToShareWith = await _unitOfWork.Users.GetByEmailAsync(email)
+                ?? throw new KeyNotFoundException($"User with email {email} not found.");
+
+            if (userToShareWith.Id == ownerId)
+                throw new InvalidOperationException("You cannot share a wallet with yourself.");
+
+            if (wallet.SharedWith.Any(u => u.Id == userToShareWith.Id))
+                return; // Already shared
+
+            wallet.SharedWith.Add(userToShareWith);
+            await _unitOfWork.Wallets.UpdateAsync(wallet);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Wallet {WalletId} shared with {Email}", walletId, email);
+        }
+
+        /// <summary>Removes a user from a shared wallet.</summary>
+        public async Task UnshareWalletAsync(Guid ownerId, Guid walletId, string email)
+        {
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
+                ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
+
+            if (wallet.UserId != ownerId)
+                throw new UnauthorizedAccessException("Only the owner can unshare the wallet.");
+
+            var userToRemove = wallet.SharedWith.FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+            if (userToRemove == null)
+                return;
+
+            wallet.SharedWith.Remove(userToRemove);
+            await _unitOfWork.Wallets.UpdateAsync(wallet);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("User {Email} removed from wallet {WalletId}", email, walletId);
+        }
+
         /// <summary>Calculates realized P&amp;L by replaying transactions per symbol using weighted average cost.</summary>
         private static decimal CalculateRealizedPnl(IEnumerable<Transaction> transactions)
         {
@@ -252,11 +297,11 @@ namespace Investe.Application.Services
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         public async Task DeleteWalletAsync(Guid userId, Guid walletId)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
                 ?? throw new KeyNotFoundException($"Wallet {walletId} not found.");
 
             if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+                throw new UnauthorizedAccessException("Only the owner can delete the wallet.");
 
             await _unitOfWork.Wallets.DeleteAsync(wallet);
             await _unitOfWork.CompleteAsync();

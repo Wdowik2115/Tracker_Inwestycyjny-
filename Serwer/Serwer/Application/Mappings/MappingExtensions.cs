@@ -10,8 +10,10 @@ namespace Investe.Application.Mappings
             return new WalletDto
             {
                 Id = wallet.Id,
+                OwnerId = wallet.UserId,
                 Name = wallet.Name,
-                Description = wallet.Description
+                Description = wallet.Description,
+                SharedWithEmails = wallet.SharedWith?.Select(u => u.Email).ToList() ?? new List<string>()
             };
         }
 
