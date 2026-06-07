@@ -87,6 +87,9 @@ namespace Investe.Application.Services
             var q = question.ToLower();
             
             // 1. Context detection
+            bool isAdvisoryQuery = q.Contains("poradę") || q.Contains("porada") || q.Contains("poradzisz") || q.Contains("jak ") || q.Contains("czy warto") || q.Contains("warto ") || q.Contains("powinienem") || q.Contains("powinnam") || q.Contains("co sądzisz") || q.Contains("zdywersyfi") || q.Contains("strategia") || q.Contains("analiz");
+            if (isAdvisoryQuery) return null;
+
             bool hasPersonalContext = q.Contains("moje") || q.Contains("mój") || q.Contains("moj") || q.Contains("mam") || q.Contains("posiadam") || q.Contains("moich") || q.Contains("portfel");
             bool isGlobalMarketQuery = q.Contains("kryptowalut") || q.Contains("rynek") || q.Contains("rynku") || q.Contains("giełd") || q.Contains("gield") || q.Contains("na świecie") || q.Contains("wszystkie");
 
@@ -104,10 +107,6 @@ namespace Investe.Application.Services
                         var title = isLookingForLosers ? "Największe spadki (24h):" : "Największe wzrosty (24h):";
                         var list = string.Join("\n", movers.Select(m => $"- {m.Name} ({m.Symbol}): {FormatDecimal(m.CurrentPrice)} USD ({FormatDecimal(m.PriceChangePercentage24h)}%)"));
                         return $"{title}\n{list}";
-                    }
-                    else if (isGlobalMarketQuery)
-                    {
-                        return "Obecnie mam trudności z pobraniem najświeższych danych rynkowych z CoinGecko. Spróbuj zapytać o konkretną cenę, np. 'cena BTC'.";
                     }
                 }
             }

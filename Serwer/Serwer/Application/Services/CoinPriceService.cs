@@ -99,9 +99,10 @@ namespace Investe.Application.Services
                         CurrentPrice = c.GetProperty("current_price").GetDecimal(),
                         PriceChangePercentage24h = c.TryGetProperty("price_change_percentage_24h", out var p) ? p.GetDecimal() : 0,
                         MarketCap = c.GetProperty("market_cap").GetDecimal()
-                    });
+                    })
+                    .ToList();
 
-                return ascending 
+                return ascending
                     ? coins.OrderBy(c => c.PriceChangePercentage24h).Take(count)
                     : coins.OrderByDescending(c => c.PriceChangePercentage24h).Take(count);
             }
