@@ -30,7 +30,7 @@
   flex: 1;
   max-width: 300px; /* Constrain width for a cleaner look */
   padding: 8px 12px;
-  background: var(--bg-card); /* Dark background from variables */
+  background: rgba(22, 28, 45, 0.9); /* More solid background */
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-primary);
@@ -63,14 +63,15 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--bg-surface);
+  background: #111622; /* More solid background for better readability */
+  backdrop-filter: blur(20px);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-top: 4px;
-  padding: 0;
+  border-radius: 12px;
+  margin-top: 6px;
+  padding: 4px 0;
   list-style: none;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 

@@ -173,6 +173,14 @@ export interface ReportDto {
   generatedAt: string;
 }
 
+// Chat models
+export interface ChatMessageDto {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+
 // Watchlist models
 export interface WatchlistItemDto {
   id: string;

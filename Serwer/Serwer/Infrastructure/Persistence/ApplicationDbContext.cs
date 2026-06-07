@@ -14,8 +14,8 @@ namespace Investe.Infrastructure.Persistence
         public DbSet<Asset> Assets { get; set; } = null!;
         public DbSet<Transaction> Transactions { get; set; } = null!;
         public DbSet<PriceAlert> PriceAlerts { get; set; } = null!;
-        public DbSet<PriceHistoryCache> PriceHistoryCache { get; set; } = null!;
         public DbSet<Report> Reports { get; set; } = null!;
+        public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
         public DbSet<WatchlistItem> Watchlist { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -28,6 +28,17 @@ namespace Investe.Infrastructure.Persistence
                 e.HasKey(u => u.Id);
                 e.Property(u => u.Id).ValueGeneratedOnAdd();
                 e.HasIndex(u => u.Email).IsUnique();
+            });
+
+            // ChatMessage
+            modelBuilder.Entity<ChatMessage>(e =>
+            {
+                e.HasKey(cm => cm.Id);
+                e.Property(cm => cm.Id).ValueGeneratedOnAdd();
+                e.HasOne(cm => cm.User)
+                    .WithMany(u => u.ChatMessages)
+                    .HasForeignKey(cm => cm.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Wallet
@@ -82,21 +93,11 @@ namespace Investe.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // PriceHistoryCache
-            modelBuilder.Entity<PriceHistoryCache>(e =>
-            {
-                e.HasKey(p => p.Id);
-                e.Property(p => p.Id).ValueGeneratedOnAdd();
-                e.HasIndex(p => new { p.CoinId, p.Date }).IsUnique();
-                e.Property(p => p.PriceUsd).HasPrecision(18, 8);
-            });
-
             // Report
             modelBuilder.Entity<Report>(e =>
             {
                 e.HasKey(r => r.Id);
                 e.Property(r => r.Id).ValueGeneratedOnAdd();
-                e.Property(r => r.Content).HasColumnType("varbinary(max)");
                 e.HasOne(r => r.User)
                     .WithMany()
                     .HasForeignKey(r => r.UserId)

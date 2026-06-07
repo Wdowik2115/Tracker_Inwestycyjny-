@@ -4,14 +4,13 @@ import { Title } from '@angular/platform-browser';
 import { WatchlistService } from '../../services/watchlist.service';
 import { ToastService } from '../../services/toast.service';
 import { WatchlistItemDto, AddToWatchlistDto } from '../../models';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-watchlist',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './watchlist.component.html',
   styleUrl: './watchlist.component.css'
 })

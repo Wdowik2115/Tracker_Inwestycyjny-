@@ -1,0 +1,84 @@
+<div class="chat-container">
+  <!-- Toggle Button -->
+  <button class="chat-toggle-btn" (click)="toggleChat()" [class.active]="isOpen">
+    <svg *ngIf="!isOpen" viewBox="0 0 24 24" width="32" height="32"><path fill="currentColor" d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H5.17L4,17.17V4H20V16Z" /></svg>
+    <svg *ngIf="isOpen" viewBox="0 0 24 24" width="32" height="32"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" /></svg>
+  </button>
+
+  <!-- Chat Window -->
+  <div class="chat-window" [class.open]="isOpen">
+    <div class="chat-header">
+      <div class="bot-info">
+        <div class="bot-icon-wrapper">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14V16A3,3 0 0,1 18,19H17V21A2,2 0 0,1 15,23H9A2,2 0 0,1 7,21V19H6A3,3 0 0,1 3,16V14A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2Z" /></svg>
+        </div>
+        <div class="bot-text">
+          <div class="bot-name">Investee AI</div>
+          <div class="bot-status-row">
+            <div class="status-led"></div>
+            <span class="status-text">Online</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="authService.isAuthenticated() && messages.length > 0 && !showChoicePrompt" 
+                class="action-icon-btn" (click)="newChat()" title="Nowy czat">
+          <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg>
+        </button>
+        <button class="action-icon-btn" (click)="toggleChat()" title="Zamknij">
+          <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-messages" #scrollContainer>
+      <div *ngIf="!authService.isAuthenticated()" class="empty-state">
+        <p>Zaloguj się, aby rozmawiać z AI.</p>
+      </div>
+
+      <div *ngIf="authService.isAuthenticated() && messages.length === 0 && !showChoicePrompt" class="welcome-container">
+        <div class="welcome-icon">👋</div>
+        <h3>Witaj w Investee!</h3>
+        <p>Jak mogę Ci dzisiaj pomóc w analizie rynku?</p>
+        
+        <div class="suggestions">
+          <button *ngFor="let s of suggestions" class="suggestion-btn" (click)="selectSuggestion(s.text)">
+            {{ s.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Choice Prompt -->
+      <div *ngIf="showChoicePrompt" class="choice-overlay">
+        <div class="choice-card">
+          <h3>Witaj ponownie!</h3>
+          <p>Masz zapisaną rozmowę. Co robimy?</p>
+          <button class="btn-primary" (click)="continueChat()">Kontynuuj</button>
+          <button class="btn-outline" (click)="newChat()">Zacznij nową</button>
+        </div>
+      </div>
+
+      <div class="messages-list" *ngIf="!showChoicePrompt">
+        <div *ngFor="let msg of messages" class="message-row" [class.user]="msg.role === 'user'">
+          <div class="message-bubble">
+            <div class="message-content" [innerHTML]="msg.content | markdown | async"></div>
+            <div class="message-time">{{ msg.createdAt | date:'HH:mm' }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="isLoading" class="message-row assistant">
+          <div class="message-bubble loading">
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form *ngIf="authService.isAuthenticated()" class="chat-input" (ngSubmit)="sendMessage()">
+      <input type="text" name="newMessage" [(ngModel)]="newMessage" placeholder="Napisz do bota..." autocomplete="off" [disabled]="isLoading" />
+      <button type="submit" [disabled]="!newMessage.trim() || isLoading" class="send-btn">
+        <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" /></svg>
+      </button>
+    </form>
+  </div>
+</div>

@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 32px;
 }
 
 /* ── Section header ────────────────────────────────────────── */
@@ -9,185 +9,204 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .section-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -1px;
 }
 
 .section-count {
   color: var(--text-secondary);
-  font-weight: 400;
-  margin-left: 4px;
+  font-weight: 500;
+  margin-left: 8px;
+  font-size: 16px;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 
 .btn-report {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: transparent;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 14px;
+  border-radius: 12px;
+  padding: 10px 20px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
 }
 
 .btn-report svg {
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
 }
 
 .btn-report:hover:not(:disabled) {
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
-}
-
-.btn-report:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+  transform: translateY(-2px);
 }
 
 .btn-new {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: #000;
   background: var(--accent);
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 12px;
+  padding: 11px 24px;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
 }
 
 .btn-new:hover {
-  opacity: 0.85;
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 166, 35, 0.5);
 }
 
 /* ── Wallet grid ───────────────────────────────────────────── */
 .wallets-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
 }
 
 .wallet-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 20px 0;
+  background: rgba(22, 28, 45, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  padding: 32px 32px 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   overflow: hidden;
-  transition: border-color 0.15s, transform 0.15s;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: fadeInUp 1s cubic-bezier(0.23, 1, 0.32, 1) both;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 .wallet-card:hover {
-  border-color: #2a3a58;
-  transform: translateY(-2px);
+  transform: translateY(-12px) scale(1.03);
+  border-color: rgba(245, 166, 35, 0.5);
+  background: rgba(30, 39, 59, 0.9);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 25px rgba(245, 166, 35, 0.1);
 }
 
 .card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .card-name {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 .card-header-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 6px;
 }
 
 .card-source {
   font-size: 11px;
+  font-weight: 600;
   color: var(--text-secondary);
-  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
 .card-view {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--accent);
   text-decoration: none;
+  transition: color 0.2s;
 }
 
 .card-view:hover {
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 
 .card-value {
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.2;
-  margin-top: 8px;
+  line-height: 1.1;
+  margin-top: 12px;
+  letter-spacing: -1px;
 }
 
 .card-pnl {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .card-pnl-pct {
-  font-weight: 400;
-  margin-left: 4px;
+  font-weight: 500;
+  opacity: 0.8;
+  font-size: 14px;
 }
 
 .card-chart {
-  margin: 0 -20px;
+  margin: 0 -28px;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.wallet-card:hover .card-chart {
+  opacity: 1;
 }
 
 .card-chart-placeholder {
-  height: 64px;
-  margin: 12px -20px 0;
-  background: var(--bg-surface);
-}
-
-/* ── Utilities ─────────────────────────────────────────────── */
-.text-success { color: var(--success); }
-.text-danger  { color: var(--danger); }
-
-.empty-state {
-  text-align: center;
-  padding: 48px 0;
-  color: var(--text-secondary);
-}
-
-.empty-state a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.empty-state a:hover {
-  text-decoration: underline;
+  height: 80px;
+  margin: 12px -28px 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent);
 }
 
 @media (max-width: 640px) {
   .wallets-grid {
     grid-template-columns: 1fr;
   }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 }
-

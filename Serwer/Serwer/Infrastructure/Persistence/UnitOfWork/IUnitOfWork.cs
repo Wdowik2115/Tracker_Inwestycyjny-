@@ -9,8 +9,8 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
         ITransactionRepository Transactions { get; }
         IPriceAlertRepository PriceAlerts { get; }
         IUserRepository Users { get; }
-        IPriceHistoryCacheRepository PriceHistory { get; }
         IReportRepository Reports { get; }
+        IChatMessageRepository ChatMessages { get; }
         IWatchlistRepository Watchlist { get; }
         Task<int> CompleteAsync();
     }

@@ -14,8 +14,8 @@
     </div>
   } @else {
     <div class="wallets-grid">
-      @for (wallet of wallets(); track wallet.id) {
-        <div class="wallet-card" [routerLink]="['/wallets', wallet.id]">
+      @for (wallet of wallets(); track wallet.id; let idx = $index) {
+        <div class="wallet-card" [routerLink]="['/wallets', wallet.id]" [style.animation-delay]="(idx * 0.1) + 's'">
           <div class="wallet-card-header">
             <div class="wallet-icon">◈</div>
             <div class="wallet-actions">
