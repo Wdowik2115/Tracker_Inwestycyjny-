@@ -43,9 +43,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       if (isAuth) {
         this.checkExistingHistory();
       } else {
-        this.messages = [];
-        this.isOpen = false;
-        this.showChoicePrompt = false;
+        setTimeout(() => {
+          this.messages = [];
+          this.isOpen = false;
+          this.showChoicePrompt = false;
+          this.cdr.detectChanges();
+        });
       }
       // Trigger change detection in next tick to avoid NG0100
       setTimeout(() => this.cdr.detectChanges());
@@ -59,11 +62,15 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.chatService.getHistory().subscribe({
       next: (history) => {
         if (history && history.length > 0) {
-          this.showChoicePrompt = true;
-          this.messages = history.map(m => ({
-            ...m,
-            role: m.role.toLowerCase() as 'user' | 'assistant'
-          }));
+          // Use setTimeout to avoid NG0100: ExpressionChangedAfterItHasBeenCheckedError
+          setTimeout(() => {
+            this.showChoicePrompt = true;
+            this.messages = history.map(m => ({
+              ...m,
+              role: m.role.toLowerCase() as 'user' | 'assistant'
+            }));
+            this.cdr.detectChanges();
+          });
         }
       }
     });

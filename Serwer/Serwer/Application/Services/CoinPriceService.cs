@@ -22,7 +22,17 @@ namespace Investe.Application.Services
             ["AVAX"]  = "avalanche-2",
             ["MATIC"] = "matic-network",
             ["LINK"]  = "chainlink",
-            ["XRP"]   = "ripple"
+            ["XRP"]   = "ripple",
+            ["DOGE"]  = "dogecoin",
+            ["SHIB"]  = "shiba-inu",
+            ["DAI"]   = "dai",
+            ["LTC"]   = "litecoin",
+            ["ATOM"]  = "cosmos",
+            ["UNI"]   = "uniswap",
+            ["NEAR"]  = "near",
+            ["POL"]   = "polygon-ecosystem-token",
+            ["PEPE"]  = "pepe",
+            ["WIF"]   = "dogwifhat"
         };
 
         private readonly IHttpClientFactory _httpClientFactory;
