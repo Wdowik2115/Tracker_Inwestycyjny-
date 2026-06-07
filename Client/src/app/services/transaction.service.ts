@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, Subject, tap } from 'rxjs';
-import { TransactionDto, TransactionCreateDto, TransactionUpdateDto } from '../models';
+import { TransactionDto, TransactionCreateDto, TransactionUpdateDto, CoinSearchDto } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -9,22 +9,23 @@ import { environment } from '../../environments/environment';
 })
 export class TransactionService {
   private apiUrl = `${environment.apiUrl}/transactions`;
+  private coinsApiUrl = `${environment.apiUrl}/coins`;
 
   private transactionAddedSubject = new Subject<void>();
   transactionAdded$ = this.transactionAddedSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
-  getTransactions(params?: { 
-    page?: number; 
-    pageSize?: number; 
-    walletId?: string; 
-    symbol?: string; 
-    startDate?: string; 
-    endDate?: string; 
+  getTransactions(params?: {
+    page?: number;
+    pageSize?: number;
+    walletId?: string;
+    symbol?: string;
+    startDate?: string;
+    endDate?: string;
   }): Observable<{ items: TransactionDto[]; totalCount: number }> {
     let httpParams = new HttpParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -52,5 +53,11 @@ export class TransactionService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => this.transactionAddedSubject.next())
     );
+  }
+
+  searchCoins(query: string): Observable<CoinSearchDto[]> {
+    return this.http.get<CoinSearchDto[]>(`${this.coinsApiUrl}/search`, {
+      params: { query }
+    });
   }
 }

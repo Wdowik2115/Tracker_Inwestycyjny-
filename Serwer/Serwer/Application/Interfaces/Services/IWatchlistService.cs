@@ -10,6 +10,5 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Deletes a watchlist item owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task RemoveFromWatchlistAsync(Guid userId, Guid id);
         Task<bool> IsOnWatchlistAsync(Guid userId, string coinId);
-        Task<IEnumerable<string>> GetSuggestionsAsync(string query);
     }
 }

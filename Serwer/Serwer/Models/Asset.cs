@@ -8,6 +8,7 @@ namespace Investe.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public decimal Quantity { get; set; }
         public decimal AverageBuyPrice { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid WalletId { get; set; }
         public Wallet Wallet { get; set; } = null!;
     }

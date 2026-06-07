@@ -9,6 +9,7 @@ namespace Investe.Domain.Entities
         public User User { get; set; } = null!;
         public string CoinId { get; set; } = string.Empty; // e.g., "bitcoin"
         public string Symbol { get; set; } = string.Empty; // e.g., "BTC"
+        public string? ImageUrl { get; set; }
         public DateTime AddedAt { get; set; } = DateTime.UtcNow;
     }
 }

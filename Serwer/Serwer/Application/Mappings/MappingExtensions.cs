@@ -17,7 +17,7 @@ namespace Investe.Application.Mappings
             };
         }
 
-        public static TransactionDto ToDto(this Transaction t)
+        public static TransactionDto ToDto(this Transaction t, string? imageUrl = null)
         {
             return new TransactionDto
             {
@@ -35,7 +35,8 @@ namespace Investe.Application.Mappings
                 CostBasisPerUnit = t.CostBasisPerUnit,
                 CostBasisSource = t.CostBasisSource,
                 ExecutedAt = DateOnly.FromDateTime(t.ExecutedAt),
-                Notes = t.Notes
+                Notes = t.Notes,
+                ImageUrl = imageUrl
             };
         }
 

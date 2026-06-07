@@ -25,13 +25,13 @@ namespace Investe.Application.Services
         public async Task<PortfolioSummaryDto> GetSummaryAsync(Guid userId)
         {
             var wallets = await _unitOfWork.Wallets.GetWalletsByUserIdAsync(userId);
-            var allAssets = new List<(string Symbol, decimal Quantity, decimal AvgCost)>();
+            var allAssets = new List<(string Symbol, string Name, string? ImageUrl, decimal Quantity, decimal AvgCost)>();
 
             foreach (var wallet in wallets)
             {
                 var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(wallet.Id);
                 foreach (var a in assets)
-                    allAssets.Add((a.Symbol, a.Quantity, a.AverageBuyPrice));
+                    allAssets.Add((a.Symbol, a.Name, a.ImageUrl, a.Quantity, a.AverageBuyPrice));
             }
 
             // Group by symbol, compute AVCO across wallets
@@ -51,6 +51,8 @@ namespace Investe.Application.Services
                 positions.Add(new PositionDto
                 {
                     Symbol = group.Key,
+                    Name = group.First().Name,
+                    ImageUrl = group.Where(a => a.ImageUrl != null).Select(a => a.ImageUrl).FirstOrDefault(),
                     Quantity = totalQty,
                     AvgCostBasis = avgCost,
                     CurrentPrice = currentPrice,

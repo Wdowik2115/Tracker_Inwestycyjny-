@@ -63,7 +63,16 @@
           @for (tx of transactions(); track tx.id) {
             <tr>
               <td class="text-secondary">{{ formatDate(tx.executedAt) }}</td>
-              <td class="asset-cell">{{ tx.symbol }}</td>
+              <td class="asset-cell">
+                <div class="asset-info">
+                  @if (tx.imageUrl) {
+                    <img class="asset-img" [src]="tx.imageUrl" [alt]="tx.symbol" />
+                  } @else {
+                    <span class="asset-img-placeholder">{{ tx.symbol[0] }}</span>
+                  }
+                  {{ tx.symbol }}
+                </div>
+              </td>
               <td>
                 <span [class]="tx.type.toLowerCase() === 'buy' ? 'badge-success' : 'badge-danger'">
                   {{ tx.type }}
@@ -107,8 +116,38 @@
 <app-modal title="Add Transaction" [isOpen]="addModalOpen()" (closed)="closeAddModal()">
   <div class="form-grid">
     <div class="form-group">
-      <label>Asset Symbol *</label>
-      <input class="form-input" type="text" placeholder="BTC" [value]="form.symbol()" (input)="form.symbol.set($any($event.target).value)" />
+      <label>Asset *</label>
+      <div class="coin-search-wrapper">
+        <input
+          class="form-input"
+          type="text"
+          placeholder="Search coin… (e.g. BTC, Ethereum)"
+          [value]="coinQuery()"
+          (input)="onCoinInput($any($event.target).value)"
+          (blur)="closeDropdownDelayed()"
+          autocomplete="off" />
+        @if (coinSearching()) {
+          <span class="coin-search-spinner"></span>
+        }
+        @if (showDropdown() && coinSuggestions().length > 0) {
+          <div class="coin-dropdown">
+            @for (coin of coinSuggestions(); track coin.coinId) {
+              <button type="button" class="coin-option" (mousedown)="selectCoin(coin)">
+                @if (coin.imageUrl) {
+                  <img class="coin-option-img" [src]="coin.imageUrl" [alt]="coin.symbol" />
+                } @else {
+                  <span class="coin-option-img coin-option-img--placeholder">{{ coin.symbol[0] }}</span>
+                }
+                <span class="coin-option-symbol">{{ coin.symbol }}</span>
+                <span class="coin-option-name">{{ coin.name }}</span>
+                @if (coin.rank) {
+                  <span class="coin-option-rank">#{{ coin.rank }}</span>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
     <div class="form-group">
       <label>Operation</label>
