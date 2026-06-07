@@ -10,12 +10,14 @@ namespace Investe.Application.Mappings
             return new WalletDto
             {
                 Id = wallet.Id,
+                OwnerId = wallet.UserId,
                 Name = wallet.Name,
-                Description = wallet.Description
+                Description = wallet.Description,
+                SharedWithEmails = wallet.SharedWith?.Select(u => u.Email).ToList() ?? new List<string>()
             };
         }
 
-        public static TransactionDto ToDto(this Transaction t)
+        public static TransactionDto ToDto(this Transaction t, string? imageUrl = null)
         {
             return new TransactionDto
             {
@@ -33,7 +35,8 @@ namespace Investe.Application.Mappings
                 CostBasisPerUnit = t.CostBasisPerUnit,
                 CostBasisSource = t.CostBasisSource,
                 ExecutedAt = DateOnly.FromDateTime(t.ExecutedAt),
-                Notes = t.Notes
+                Notes = t.Notes,
+                ImageUrl = imageUrl
             };
         }
 

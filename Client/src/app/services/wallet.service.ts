@@ -35,4 +35,12 @@ export class WalletService {
   getWalletHistory(id: string, days = 30): Observable<WalletHistoryDto> {
     return this.http.get<WalletHistoryDto>(`${this.apiUrl}/${id}/history?days=${days}`);
   }
+
+  shareWallet(id: string, email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/share`, { email });
+  }
+
+  unshareWallet(id: string, email: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/share/${email}`);
+  }
 }

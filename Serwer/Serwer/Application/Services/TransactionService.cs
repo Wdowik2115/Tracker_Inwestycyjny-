@@ -26,11 +26,11 @@ namespace Investe.Application.Services
         /// <summary>Adds a buy/sell transaction for the user's wallet, auto-filling cost basis when missing.</summary>
         public async Task<TransactionDto> AddTransactionAsync(Guid userId, TransactionCreateDto dto)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(dto.WalletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(dto.WalletId)
                 ?? throw new KeyNotFoundException($"Wallet {dto.WalletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(dto.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == dto.CoinId);
@@ -47,7 +47,8 @@ namespace Investe.Application.Services
                         Symbol = dto.Symbol,
                         Name = dto.Symbol,
                         Quantity = dto.Quantity,
-                        AverageBuyPrice = dto.PriceAtTime
+                        AverageBuyPrice = dto.PriceAtTime,
+                        ImageUrl = dto.ImageUrl
                     };
                     await _unitOfWork.Assets.AddAsync(asset);
                 }
@@ -109,7 +110,7 @@ namespace Investe.Application.Services
             await _unitOfWork.CompleteAsync();
 
             _logger.LogInformation("Transaction {TxId} saved for wallet {WalletId}", transaction.Id, dto.WalletId);
-            return transaction.ToDto();
+            return transaction.ToDto(dto.ImageUrl);
         }
 
         /// <summary>Returns all transactions across all wallets owned by the user.</summary>
@@ -121,7 +122,16 @@ namespace Investe.Application.Services
             foreach (var wallet in wallets)
             {
                 var txs = await _unitOfWork.Transactions.GetTransactionsByWalletIdAsync(wallet.Id);
-                result.AddRange(txs.Select(t => t.ToDto()));
+                var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(wallet.Id);
+                var imagesByCoinId = assets
+                    .Where(a => a.ImageUrl != null)
+                    .ToDictionary(a => a.CoinId, a => a.ImageUrl);
+
+                foreach (var tx in txs)
+                {
+                    imagesByCoinId.TryGetValue(tx.CoinId, out var imageUrl);
+                    result.Add(tx.ToDto(imageUrl));
+                }
             }
 
             return result.OrderByDescending(t => t.ExecutedAt);
@@ -142,7 +152,20 @@ namespace Investe.Application.Services
             var (items, totalCount) = await _unitOfWork.Transactions.GetPagedTransactionsAsync(
                 userId, page, pageSize, walletId, symbol, startDateTime, endDateTime);
 
-            return (items.Select(t => t.ToDto()), totalCount);
+            var wallets = await _unitOfWork.Wallets.GetWalletsByUserIdAsync(userId);
+            var allAssets = new List<Investe.Domain.Entities.Asset>();
+            foreach (var w in wallets)
+                allAssets.AddRange(await _unitOfWork.Assets.GetAssetsByWalletIdAsync(w.Id));
+
+            var imagesByCoinId = allAssets
+                .Where(a => a.ImageUrl != null)
+                .GroupBy(a => a.CoinId)
+                .ToDictionary(g => g.Key, g => g.First().ImageUrl);
+
+            return (items.Select(t => {
+                imagesByCoinId.TryGetValue(t.CoinId, out var img);
+                return t.ToDto(img);
+            }), totalCount);
         }
 
         /// <summary>Deletes a transaction and reverses its effect on the asset position.</summary>
@@ -151,11 +174,11 @@ namespace Investe.Application.Services
             var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
                 ?? throw new KeyNotFoundException($"Transaction {transactionId} not found.");
 
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(transaction.WalletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(transaction.WalletId)
                 ?? throw new KeyNotFoundException($"Wallet {transaction.WalletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Transaction does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);
@@ -212,11 +235,11 @@ namespace Investe.Application.Services
             var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
                 ?? throw new KeyNotFoundException($"Transaction {transactionId} not found.");
 
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(transaction.WalletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(transaction.WalletId)
                 ?? throw new KeyNotFoundException($"Wallet {transaction.WalletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Transaction does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);

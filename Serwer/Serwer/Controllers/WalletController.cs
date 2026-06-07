@@ -59,5 +59,19 @@ namespace Serwer.Controllers
             var history = await _walletService.GetWalletHistoryAsync(User.GetUserId(), id, Math.Clamp(days, 7, 365));
             return Ok(history);
         }
+
+        [HttpPost("{id:guid}/share")]
+        public async Task<IActionResult> ShareWallet(Guid id, [FromBody] ShareWalletDto dto)
+        {
+            await _walletService.ShareWalletAsync(User.GetUserId(), id, dto.Email);
+            return Ok();
+        }
+
+        [HttpDelete("{id:guid}/share/{email}")]
+        public async Task<IActionResult> UnshareWallet(Guid id, string email)
+        {
+            await _walletService.UnshareWalletAsync(User.GetUserId(), id, email);
+            return Ok();
+        }
     }
 }

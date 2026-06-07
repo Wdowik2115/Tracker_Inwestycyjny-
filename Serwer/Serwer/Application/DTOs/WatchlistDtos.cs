@@ -7,6 +7,7 @@ namespace Investe.Application.DTOs
         public Guid Id { get; set; }
         public string CoinId { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
         public decimal CurrentPrice { get; set; }
         public DateTime AddedAt { get; set; }
     }
@@ -15,5 +16,6 @@ namespace Investe.Application.DTOs
     {
         public string CoinId { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
     }
 }

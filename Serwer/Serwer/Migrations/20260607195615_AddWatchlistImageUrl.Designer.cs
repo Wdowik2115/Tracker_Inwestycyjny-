@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Serwer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260606212319_AddWatchlist")]
-    partial class AddWatchlist
+    [Migration("20260607195615_AddWatchlistImageUrl")]
+    partial class AddWatchlistImageUrl
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,6 +39,9 @@ namespace Serwer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -59,6 +62,33 @@ namespace Serwer.Migrations
                     b.HasIndex("WalletId");
 
                     b.ToTable("Assets");
+                });
+
+            modelBuilder.Entity("Investe.Domain.Entities.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ChatMessages");
                 });
 
             modelBuilder.Entity("Investe.Domain.Entities.PriceAlert", b =>
@@ -99,34 +129,6 @@ namespace Serwer.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PriceAlerts");
-                });
-
-            modelBuilder.Entity("Investe.Domain.Entities.PriceHistoryCache", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CoinId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FetchedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("PriceUsd")
-                        .HasPrecision(18, 8)
-                        .HasColumnType("decimal(18,8)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CoinId", "Date")
-                        .IsUnique();
-
-                    b.ToTable("PriceHistoryCache");
                 });
 
             modelBuilder.Entity("Investe.Domain.Entities.Report", b =>
@@ -307,6 +309,9 @@ namespace Serwer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Symbol")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -330,6 +335,17 @@ namespace Serwer.Migrations
                         .IsRequired();
 
                     b.Navigation("Wallet");
+                });
+
+            modelBuilder.Entity("Investe.Domain.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("Investe.Domain.Entities.User", "User")
+                        .WithMany("ChatMessages")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Investe.Domain.Entities.PriceAlert", b =>
@@ -396,6 +412,8 @@ namespace Serwer.Migrations
 
             modelBuilder.Entity("Investe.Domain.Entities.User", b =>
                 {
+                    b.Navigation("ChatMessages");
+
                     b.Navigation("PriceAlerts");
 
                     b.Navigation("Wallets");

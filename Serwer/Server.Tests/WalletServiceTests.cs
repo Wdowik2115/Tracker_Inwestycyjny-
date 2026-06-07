@@ -21,6 +21,7 @@ namespace Serwer.Tests.Application.Services
             Mock<IWalletRepository> walletRepo,
             Mock<IAssetRepository> assetRepo,
             Mock<ITransactionRepository> transRepo,
+            Mock<IUserRepository> userRepo,
             Mock<ICoinPriceService> priceService,
             WalletService sut)
             BuildSut()
@@ -29,15 +30,17 @@ namespace Serwer.Tests.Application.Services
             var walletRepo = new Mock<IWalletRepository>();
             var assetRepo = new Mock<IAssetRepository>();
             var transRepo = new Mock<ITransactionRepository>();
+            var userRepo = new Mock<IUserRepository>();
             var priceService = new Mock<ICoinPriceService>();
             var logger = new Mock<ILogger<WalletService>>();
 
             uow.Setup(u => u.Wallets).Returns(walletRepo.Object);
             uow.Setup(u => u.Assets).Returns(assetRepo.Object);
             uow.Setup(u => u.Transactions).Returns(transRepo.Object);
+            uow.Setup(u => u.Users).Returns(userRepo.Object);
 
             var sut = new WalletService(uow.Object, priceService.Object, logger.Object);
-            return (uow, walletRepo, assetRepo, transRepo, priceService, sut);
+            return (uow, walletRepo, assetRepo, transRepo, userRepo, priceService, sut);
         }
 
         // ── CreateWalletAsync ─────────────────────────────────────────────────────
@@ -45,7 +48,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task CreateWalletAsync_PersistsWalletAndReturnsDto()
         {
-            var (uow, walletRepo, _, _, _, sut) = BuildSut();
+            var (uow, walletRepo, _, _, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var dto = new CreateWalletDto { Name = "My Wallet", Description = "desc" };
 
@@ -68,7 +71,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task CreateWalletAsync_NullDescription_DefaultsToEmptyString()
         {
-            var (uow, walletRepo, _, _, _, sut) = BuildSut();
+            var (uow, walletRepo, _, _, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var dto = new CreateWalletDto { Name = "Wallet", Description = null };
 
@@ -87,7 +90,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetUserWalletsAsync_NoWallets_ReturnsEmpty()
         {
-            var (_, walletRepo, assetRepo, _, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, _, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
 
             walletRepo.Setup(r => r.GetWalletsByUserIdAsync(userId))
@@ -103,7 +106,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetUserWalletsAsync_CalculatesTotalValueAndPnl()
         {
-            var (_, walletRepo, assetRepo, _, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, _, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
 
@@ -134,7 +137,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetUserWalletsAsync_ZeroCostBasis_PnlPercentIsZero()
         {
-            var (_, walletRepo, assetRepo, _, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, _, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
 
@@ -158,7 +161,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetUserWalletsAsync_BatchesPriceRequestAcrossAllWallets()
         {
-            var (_, walletRepo, assetRepo, _, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, _, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var w1 = Guid.NewGuid();
             var w2 = Guid.NewGuid();
@@ -189,11 +192,11 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletDetailsAsync_WalletNotFound_ThrowsKeyNotFoundException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync((Wallet?)null);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync((Wallet?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(
                 () => sut.GetWalletDetailsAsync(userId, walletId));
@@ -202,11 +205,11 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletDetailsAsync_WrongUser_ThrowsUnauthorizedAccessException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = Guid.NewGuid() };
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
 
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
                 () => sut.GetWalletDetailsAsync(Guid.NewGuid(), walletId));
@@ -215,12 +218,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletDetailsAsync_NoAssets_ReturnsDtoWithZeros()
         {
-            var (_, walletRepo, assetRepo, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = userId, Name = "Empty" };
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
             assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId))
                 .ReturnsAsync(new List<Asset>());
             transRepo.Setup(r => r.GetTransactionsByWalletIdAsync(walletId))
@@ -239,12 +242,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletDetailsAsync_CalculatesPositionPnlCorrectly()
         {
-            var (_, walletRepo, assetRepo, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = userId, Name = "W" };
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
 
             var asset = new Asset
             {
@@ -275,13 +278,13 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletDetailsAsync_IncludesRealizedPnlFromTransactions()
         {
-            var (_, walletRepo, assetRepo, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = userId, Name = "W" };
             var t0 = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
             assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId))
                 .ReturnsAsync(new List<Asset>());
             priceService.Setup(p => p.GetCurrentPricesAsync(It.IsAny<IEnumerable<string>>()))
@@ -305,7 +308,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task UpdateWalletAsync_WalletNotFound_ThrowsKeyNotFoundException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             walletRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Wallet?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(
@@ -315,9 +318,9 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task UpdateWalletAsync_WrongUser_ThrowsUnauthorizedAccessException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = Guid.NewGuid() });
 
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -327,12 +330,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task UpdateWalletAsync_UpdatesNameAndDescriptionAndCompletes()
         {
-            var (uow, walletRepo, _, _, _, sut) = BuildSut();
+            var (uow, walletRepo, _, _, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = userId, Name = "Old", Description = "old desc" };
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
             walletRepo.Setup(r => r.UpdateAsync(It.IsAny<Wallet>())).Returns(Task.CompletedTask);
 
             var dto = new UpdateWalletDto { Name = "New Name", Description = "new desc" };
@@ -348,12 +351,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task UpdateWalletAsync_NullDescription_DefaultsToEmptyString()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = userId, Name = "W", Description = "old" };
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
             walletRepo.Setup(r => r.UpdateAsync(It.IsAny<Wallet>())).Returns(Task.CompletedTask);
 
             await sut.UpdateWalletAsync(userId, walletId, new UpdateWalletDto { Name = "W", Description = null });
@@ -366,7 +369,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task DeleteWalletAsync_WalletNotFound_ThrowsKeyNotFoundException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             walletRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Wallet?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(
@@ -376,9 +379,9 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task DeleteWalletAsync_WrongUser_ThrowsUnauthorizedAccessException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = Guid.NewGuid() });
 
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -388,12 +391,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task DeleteWalletAsync_CallsDeleteAndCompletes()
         {
-            var (uow, walletRepo, _, _, _, sut) = BuildSut();
+            var (uow, walletRepo, _, _, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var wallet = new Wallet { Id = walletId, UserId = userId };
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
             walletRepo.Setup(r => r.DeleteAsync(wallet)).Returns(Task.CompletedTask);
 
             await sut.DeleteWalletAsync(userId, walletId);
@@ -407,7 +410,7 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletHistoryAsync_WalletNotFound_ThrowsKeyNotFoundException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             walletRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Wallet?)null);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(
@@ -417,9 +420,9 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletHistoryAsync_WrongUser_ThrowsUnauthorizedAccessException()
         {
-            var (_, walletRepo, _, _, _, sut) = BuildSut();
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = Guid.NewGuid() });
 
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -429,10 +432,10 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletHistoryAsync_NoTransactions_ReturnsEmptyPoints()
         {
-            var (_, walletRepo, _, transRepo, _, sut) = BuildSut();
+            var (_, walletRepo, _, transRepo, _, _, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId });
             transRepo.Setup(r => r.GetTransactionsByWalletIdAsync(walletId))
                 .ReturnsAsync(new List<Transaction>());
@@ -446,10 +449,10 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletHistoryAsync_ReturnsPointsWithCorrectValues()
         {
-            var (_, walletRepo, _, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, _, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId });
 
             var buyDate = DateTime.UtcNow.Date.AddDays(-5);
@@ -477,10 +480,10 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletHistoryAsync_ExcludesPointsBeforeBuyDate()
         {
-            var (_, walletRepo, _, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, _, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId });
 
             var buyDate = DateTime.UtcNow.Date.AddDays(-2);
@@ -509,10 +512,10 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task GetWalletHistoryAsync_SellReducesHoldingsOnSubsequentDates()
         {
-            var (_, walletRepo, _, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, _, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId });
 
             var day1 = DateTime.UtcNow.Date.AddDays(-3);
@@ -547,12 +550,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task RealizedPnl_MultipleBuysWeightedAverageThenSell_ComputesCorrectly()
         {
-            var (_, walletRepo, assetRepo, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var t0 = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId, Name = "W" });
             assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId))
                 .ReturnsAsync(new List<Asset>());
@@ -577,12 +580,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task RealizedPnl_MultipleSymbols_SumsRealizedAcrossSymbols()
         {
-            var (_, walletRepo, assetRepo, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var t0 = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId, Name = "W" });
             assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId))
                 .ReturnsAsync(new List<Asset>());
@@ -609,12 +612,12 @@ namespace Serwer.Tests.Application.Services
         [Fact]
         public async Task RealizedPnl_NoSells_IsZero()
         {
-            var (_, walletRepo, assetRepo, transRepo, priceService, sut) = BuildSut();
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
             var userId = Guid.NewGuid();
             var walletId = Guid.NewGuid();
             var t0 = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            walletRepo.Setup(r => r.GetByIdAsync(walletId))
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId))
                 .ReturnsAsync(new Wallet { Id = walletId, UserId = userId, Name = "W" });
             assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId))
                 .ReturnsAsync(new List<Asset>());
@@ -630,6 +633,136 @@ namespace Serwer.Tests.Application.Services
             var result = await sut.GetWalletDetailsAsync(userId, walletId);
 
             Assert.Equal(0m, result.RealizedPnl);
+        }
+
+        // ── Shared Wallets ────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWalletDetailsAsync_SharedUserAccess_ReturnsDetails()
+        {
+            var (_, walletRepo, assetRepo, transRepo, _, priceService, sut) = BuildSut();
+            var ownerId = Guid.NewGuid();
+            var sharedUserId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+
+            var wallet = new Wallet 
+            { 
+                Id = walletId, 
+                UserId = ownerId, 
+                SharedWith = new List<User> { new() { Id = sharedUserId } } 
+            };
+
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(new List<Asset>());
+            transRepo.Setup(r => r.GetTransactionsByWalletIdAsync(walletId)).ReturnsAsync(new List<Transaction>());
+            priceService.Setup(p => p.GetCurrentPricesAsync(It.IsAny<IEnumerable<string>>()))
+                .ReturnsAsync(new Dictionary<string, decimal>());
+
+            var result = await sut.GetWalletDetailsAsync(sharedUserId, walletId);
+
+            Assert.Equal(walletId, result.Id);
+            Assert.Equal(ownerId, result.OwnerId);
+        }
+
+        [Fact]
+        public async Task UpdateWalletAsync_SharedUser_ThrowsUnauthorizedAccessException()
+        {
+            var (_, walletRepo, _, _, _, _, sut) = BuildSut();
+            var ownerId = Guid.NewGuid();
+            var sharedUserId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+
+            var wallet = new Wallet 
+            { 
+                Id = walletId, 
+                UserId = ownerId, 
+                SharedWith = new List<User> { new() { Id = sharedUserId } } 
+            };
+
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(
+                () => sut.UpdateWalletAsync(sharedUserId, walletId, new UpdateWalletDto { Name = "New" }));
+        }
+
+        [Fact]
+        public async Task ShareWalletAsync_ValidUser_AddsToSharedWith()
+        {
+            var (uow, walletRepo, _, _, userRepo, _, sut) = BuildSut();
+            var ownerId = Guid.NewGuid();
+            var friendId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var email = "friend@test.com";
+
+            var wallet = new Wallet { Id = walletId, UserId = ownerId };
+            var friend = new User { Id = friendId, Email = email };
+
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
+            userRepo.Setup(r => r.GetByEmailAsync(email)).ReturnsAsync(friend);
+
+            await sut.ShareWalletAsync(ownerId, walletId, email);
+
+            Assert.Contains(friend, wallet.SharedWith);
+            walletRepo.Verify(r => r.UpdateAsync(wallet), Times.Once);
+            uow.Verify(u => u.CompleteAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task ShareWalletAsync_UserNotFound_ThrowsKeyNotFoundException()
+        {
+            var (_, walletRepo, _, _, userRepo, _, sut) = BuildSut();
+            var ownerId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var email = "none@test.com";
+
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(new Wallet { Id = walletId, UserId = ownerId });
+            userRepo.Setup(r => r.GetByEmailAsync(email)).ReturnsAsync((User?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => sut.ShareWalletAsync(ownerId, walletId, email));
+        }
+
+        [Fact]
+        public async Task ShareWalletAsync_SelfShare_ThrowsInvalidOperationException()
+        {
+            var (_, walletRepo, _, _, userRepo, _, sut) = BuildSut();
+            var ownerId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var email = "owner@test.com";
+
+            var wallet = new Wallet { Id = walletId, UserId = ownerId };
+            var owner = new User { Id = ownerId, Email = email };
+
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
+            userRepo.Setup(r => r.GetByEmailAsync(email)).ReturnsAsync(owner);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => sut.ShareWalletAsync(ownerId, walletId, email));
+        }
+
+        [Fact]
+        public async Task UnshareWalletAsync_RemovesUserFromSharedWith()
+        {
+            var (uow, walletRepo, _, _, _, _, sut) = BuildSut();
+            var ownerId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var email = "friend@test.com";
+            var friend = new User { Id = Guid.NewGuid(), Email = email };
+
+            var wallet = new Wallet 
+            { 
+                Id = walletId, 
+                UserId = ownerId, 
+                SharedWith = new List<User> { friend } 
+            };
+
+            walletRepo.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
+
+            await sut.UnshareWalletAsync(ownerId, walletId, email);
+
+            Assert.DoesNotContain(friend, wallet.SharedWith);
+            walletRepo.Verify(r => r.UpdateAsync(wallet), Times.Once);
+            uow.Verify(u => u.CompleteAsync(), Times.Once);
         }
     }
 }

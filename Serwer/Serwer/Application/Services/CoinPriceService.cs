@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Investe.Application.DTOs;
 using Investe.Application.Interfaces.Services;
-using Investe.Infrastructure.Persistence.UnitOfWork;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -78,11 +77,6 @@ namespace Investe.Application.Services
             return result;
         }
 
-        public Task<Dictionary<string, string>> GetSupportedCoinsAsync()
-        {
-            return Task.FromResult(new Dictionary<string, string>(SymbolToId));
-        }
-
         public async Task<IEnumerable<CoinMarketDataDto>> GetTopMoversAsync(int count = 10, bool ascending = false)
         {
             try
@@ -90,7 +84,7 @@ namespace Investe.Application.Services
                 var client = _httpClientFactory.CreateClient("CoinGecko");
                 var response = await client.GetStringAsync($"coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h");
                 using var doc = JsonDocument.Parse(response);
-                
+
                 var coins = doc.RootElement.EnumerateArray()
                     .Select(c => new CoinMarketDataDto
                     {
@@ -113,7 +107,6 @@ namespace Investe.Application.Services
             }
         }
 
-        /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>
         public async Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date)
         {
             if (!SymbolToId.TryGetValue(symbol, out var coinId)) return 0m;
@@ -137,12 +130,37 @@ namespace Investe.Application.Services
                 var response = await client.GetStringAsync($"coins/{coinId}/market_chart?vs_currency=usd&days={days}&interval=daily");
                 using var doc = JsonDocument.Parse(response);
                 return doc.RootElement.GetProperty("prices").EnumerateArray()
-                    .Select(p => new HistoryPointDto { 
-                        Date = DateTimeOffset.FromUnixTimeMilliseconds(p[0].GetInt64()).UtcDateTime.Date, 
-                        Value = p[1].GetDecimal() 
+                    .Select(p => new HistoryPointDto {
+                        Date = DateTimeOffset.FromUnixTimeMilliseconds(p[0].GetInt64()).UtcDateTime.Date,
+                        Value = p[1].GetDecimal()
                     }).ToList();
             }
             catch { return new List<HistoryPointDto>(); }
+        }
+
+        public async Task<string> GetCoinImageUrlAsync(string coinId)
+        {
+            if (string.IsNullOrWhiteSpace(coinId))
+                return string.Empty;
+
+            var cacheKey = $"image:{coinId.ToLowerInvariant()}";
+            if (_cache.TryGetValue(cacheKey, out string cached))
+                return cached;
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("CoinGecko");
+                var response = await client.GetStringAsync($"coins/{coinId.ToLowerInvariant()}");
+                using var doc = JsonDocument.Parse(response);
+                var imageUrl = doc.RootElement.GetProperty("image").GetProperty("large").GetString() ?? string.Empty;
+                _cache.Set(cacheKey, imageUrl, CacheTtl);
+                return imageUrl;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch image for {CoinId}", coinId);
+                return string.Empty;
+            }
         }
     }
 }

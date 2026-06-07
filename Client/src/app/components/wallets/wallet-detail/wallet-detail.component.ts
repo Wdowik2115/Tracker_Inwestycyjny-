@@ -10,6 +10,7 @@ import {
   ApexXAxis, ApexYAxis, ApexGrid, ApexTheme
 } from 'ng-apexcharts';
 import { WalletService } from '../../../services/wallet.service';
+import { AuthService } from '../../../services/auth.service';
 import { TransactionService } from '../../../services/transaction.service';
 import { ToastService } from '../../../services/toast.service';
 import { ReportService } from '../../../services/report.service';
@@ -29,6 +30,7 @@ export class WalletDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private walletService = inject(WalletService);
+  private authService = inject(AuthService);
   private transactionService = inject(TransactionService);
   private toastService = inject(ToastService);
   private reportService = inject(ReportService);
@@ -53,6 +55,11 @@ export class WalletDetailComponent implements OnInit, OnDestroy {
     { label: '1Y', days: 365 },
     { label: 'ALL', days: 365 },
   ];
+
+  isOwner(): boolean {
+    const w = this.wallet();
+    return w?.ownerId === this.authService.currentUser()?.userId;
+  }
 
   totalInvested = computed(() => {
     const w = this.wallet();

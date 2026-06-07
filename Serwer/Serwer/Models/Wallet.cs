@@ -10,5 +10,6 @@ namespace Investe.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<Asset> Assets { get; set; } = new List<Asset>();
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<User> SharedWith { get; set; } = new List<User>();
     }
 }

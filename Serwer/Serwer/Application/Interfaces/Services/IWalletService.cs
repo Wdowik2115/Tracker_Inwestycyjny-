@@ -21,5 +21,11 @@ namespace Investe.Application.Interfaces.Services
 
         /// <summary>Returns daily portfolio value history for a wallet over the last <paramref name="days"/> days.</summary>
         Task<WalletHistoryDto> GetWalletHistoryAsync(Guid userId, Guid walletId, int days);
+
+        /// <summary>Shares a wallet with another user by their email.</summary>
+        Task ShareWalletAsync(Guid ownerId, Guid walletId, string email);
+
+        /// <summary>Removes a user from a shared wallet.</summary>
+        Task UnshareWalletAsync(Guid ownerId, Guid walletId, string email);
     }
 }

@@ -13,11 +13,7 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>
         Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date);
 
-        /// <summary>
-        /// Returns daily USD prices for the last <paramref name="days"/> days.
-        /// Served from the DB cache; only calls CoinGecko when data is missing or today's price is stale (&gt; 4 h old).
-        /// Returns an empty list for unknown symbols.
-        /// </summary>
+        /// <summary>Returns daily USD prices for the last <paramref name="days"/> days.</summary>
         Task<List<HistoryPointDto>> GetPriceHistoryAsync(string symbol, int days);
 
         /// <summary>Returns a list of all coins supported by the service (symbol and name/id).</summary>
@@ -25,5 +21,8 @@ namespace Investe.Application.Interfaces.Services
 
         /// <summary>Returns the top N coins by price change percentage in the last 24h.</summary>
         Task<IEnumerable<CoinMarketDataDto>> GetTopMoversAsync(int count = 10, bool ascending = false);
+
+        /// <summary>Returns the image URL for a coin from CoinGecko. Returns empty string on failure.</summary>
+        Task<string> GetCoinImageUrlAsync(string coinId);
     }
 }
