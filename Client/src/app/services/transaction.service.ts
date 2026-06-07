@@ -1,15 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, Subject, tap } from 'rxjs';
-import { TransactionDto, TransactionCreateDto, TransactionUpdateDto } from '../models';
+import { TransactionDto, TransactionCreateDto, TransactionUpdateDto, CoinSearchDto } from '../models';
 import { environment } from '../../environments/environment';
-
-export interface CoinSearchDto {
-  coinId: string;
-  symbol: string;
-  name: string;
-  imageUrl?: string;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -23,16 +16,16 @@ export class TransactionService {
 
   constructor(private http: HttpClient) {}
 
-  getTransactions(params?: { 
-    page?: number; 
-    pageSize?: number; 
-    walletId?: string; 
-    symbol?: string; 
-    startDate?: string; 
-    endDate?: string; 
+  getTransactions(params?: {
+    page?: number;
+    pageSize?: number;
+    walletId?: string;
+    symbol?: string;
+    startDate?: string;
+    endDate?: string;
   }): Observable<{ items: TransactionDto[]; totalCount: number }> {
     let httpParams = new HttpParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {

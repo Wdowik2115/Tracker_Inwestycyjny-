@@ -79,6 +79,7 @@ export interface TransactionDto {
   costBasisSource?: string;
   executedAt: string;
   notes: string;
+  imageUrl?: string;
 }
 
 export interface TransactionCreateDto {
@@ -93,6 +94,16 @@ export interface TransactionCreateDto {
   costBasisPerUnit?: number;
   executedAt?: string;
   notes: string;
+  imageUrl?: string;
+}
+
+// Coin search
+export interface CoinSearchDto {
+  coinId: string;
+  symbol: string;
+  name: string;
+  imageUrl?: string;
+  rank?: number;
 }
 
 export interface TransactionUpdateDto {

@@ -122,7 +122,16 @@ namespace Investe.Application.Services
             foreach (var wallet in wallets)
             {
                 var txs = await _unitOfWork.Transactions.GetTransactionsByWalletIdAsync(wallet.Id);
-                result.AddRange(txs.Select(t => t.ToDto()));
+                var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(wallet.Id);
+                var imagesByCoinId = assets
+                    .Where(a => a.ImageUrl != null)
+                    .ToDictionary(a => a.CoinId, a => a.ImageUrl);
+
+                foreach (var tx in txs)
+                {
+                    imagesByCoinId.TryGetValue(tx.CoinId, out var imageUrl);
+                    result.Add(tx.ToDto(imageUrl));
+                }
             }
 
             return result.OrderByDescending(t => t.ExecutedAt);
