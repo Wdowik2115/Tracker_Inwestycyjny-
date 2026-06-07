@@ -7,12 +7,11 @@ import { UserService } from '../../../services/user.service';
 import { PortfolioSummaryDto } from '../../../models';
 import { AuthService } from '../../../services/auth.service';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-portfolio-header',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './portfolio-header.component.html',
   styleUrl: './portfolio-header.component.css'
 })

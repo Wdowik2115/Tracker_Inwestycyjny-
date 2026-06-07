@@ -69,6 +69,7 @@ namespace Serwer
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IReportRepository, ReportRepository>();
             builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+            builder.Services.AddScoped<IWatchlistRepository, WatchlistRepository>();
 
             // ── Application Services ──────────────────────────────────────────
             builder.Services.AddScoped<ICoinPriceService, CoinPriceService>();
@@ -80,6 +81,7 @@ namespace Serwer
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IWatchlistService, WatchlistService>();
 
             // ── Background Services ───────────────────────────────────────────
             builder.Services.AddHostedService<PriceAlertBackgroundService>();

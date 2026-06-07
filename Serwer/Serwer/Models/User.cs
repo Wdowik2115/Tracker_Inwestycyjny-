@@ -12,5 +12,6 @@ namespace Investe.Domain.Entities
         public ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
         public ICollection<PriceAlert> PriceAlerts { get; set; } = new List<PriceAlert>();
         public ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
+        public ICollection<WatchlistItem> WatchlistItems { get; set; } = new List<WatchlistItem>();
     }
 }

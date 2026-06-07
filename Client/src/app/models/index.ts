@@ -181,3 +181,16 @@ export interface ChatMessageDto {
   createdAt: string;
 }
 
+// Watchlist models
+export interface WatchlistItemDto {
+  id: string;
+  coinId: string;
+  symbol: string;
+  currentPrice: number;
+  addedAt: string;
+}
+
+export interface AddToWatchlistDto {
+  coinId: string;
+  symbol: string;
+}

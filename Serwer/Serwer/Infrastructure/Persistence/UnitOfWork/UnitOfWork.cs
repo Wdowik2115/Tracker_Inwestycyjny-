@@ -17,6 +17,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
             Users = new UserRepository(_context);
             Reports = new ReportRepository(_context);
             ChatMessages = new ChatMessageRepository(_context);
+            Watchlist = new WatchlistRepository(_context);
         }
 
         public IWalletRepository Wallets { get; private set; }
@@ -26,6 +27,7 @@ namespace Investe.Infrastructure.Persistence.UnitOfWork
         public IUserRepository Users { get; private set; }
         public IReportRepository Reports { get; private set; }
         public IChatMessageRepository ChatMessages { get; private set; }
+        public IWatchlistRepository Watchlist { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

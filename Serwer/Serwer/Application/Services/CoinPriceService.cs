@@ -27,6 +27,7 @@ namespace Investe.Application.Services
             ["SHIB"]  = "shiba-inu",
             ["DAI"]   = "dai",
             ["LTC"]   = "litecoin",
+            ["BCH"]   = "bitcoin-cash",
             ["ATOM"]  = "cosmos",
             ["UNI"]   = "uniswap",
             ["NEAR"]  = "near",
@@ -77,6 +78,12 @@ namespace Investe.Application.Services
             return result;
         }
 
+        public Task<Dictionary<string, string>> GetSupportedCoinsAsync()
+        {
+            return Task.FromResult(new Dictionary<string, string>(SymbolToId));
+        }
+
+        /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>
         public async Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date)
         {
             if (!SymbolToId.TryGetValue(symbol, out var coinId)) return 0m;
