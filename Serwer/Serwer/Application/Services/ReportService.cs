@@ -53,11 +53,11 @@ namespace Investe.Application.Services
 
         public async Task<ReportDto> GenerateWalletReportAsync(Guid userId, Guid walletId)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(walletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(walletId)
                 ?? throw new KeyNotFoundException("Wallet not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = (await _unitOfWork.Assets.GetAssetsByWalletIdAsync(walletId)).ToList();
             var symbols = assets.Select(a => a.Symbol).Distinct();

@@ -26,11 +26,11 @@ namespace Investe.Application.Services
         /// <summary>Adds a buy/sell transaction for the user's wallet, auto-filling cost basis when missing.</summary>
         public async Task<TransactionDto> AddTransactionAsync(Guid userId, TransactionCreateDto dto)
         {
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(dto.WalletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(dto.WalletId)
                 ?? throw new KeyNotFoundException($"Wallet {dto.WalletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Wallet does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(dto.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == dto.CoinId);
@@ -174,11 +174,11 @@ namespace Investe.Application.Services
             var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
                 ?? throw new KeyNotFoundException($"Transaction {transactionId} not found.");
 
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(transaction.WalletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(transaction.WalletId)
                 ?? throw new KeyNotFoundException($"Wallet {transaction.WalletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Transaction does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);
@@ -235,11 +235,11 @@ namespace Investe.Application.Services
             var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
                 ?? throw new KeyNotFoundException($"Transaction {transactionId} not found.");
 
-            var wallet = await _unitOfWork.Wallets.GetByIdAsync(transaction.WalletId)
+            var wallet = await _unitOfWork.Wallets.GetWalletWithMembersAsync(transaction.WalletId)
                 ?? throw new KeyNotFoundException($"Wallet {transaction.WalletId} not found.");
 
-            if (wallet.UserId != userId)
-                throw new UnauthorizedAccessException("Transaction does not belong to this user.");
+            if (wallet.UserId != userId && !wallet.SharedWith.Any(u => u.Id == userId))
+                throw new UnauthorizedAccessException("You do not have access to this wallet.");
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);

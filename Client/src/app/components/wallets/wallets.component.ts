@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { WalletService } from '../../services/wallet.service';
+import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../shared/modal/modal.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
@@ -21,6 +22,7 @@ function truncateAddress(addr: string): string {
 })
 export class WalletsComponent implements OnInit {
   private walletService = inject(WalletService);
+  private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
   private router = inject(Router);
@@ -29,7 +31,9 @@ export class WalletsComponent implements OnInit {
   wallets = signal<WalletDto[]>([]);
   addModalOpen = signal(false);
   editModalOpen = signal(false);
+  shareModalOpen = signal(false);
   editingWalletId = signal<string | null>(null);
+  sharingWallet = signal<WalletDto | null>(null);
   submitting = signal(false);
 
   form = {
@@ -42,6 +46,8 @@ export class WalletsComponent implements OnInit {
     description: signal('')
   };
 
+  shareEmail = signal('');
+
   ngOnInit(): void {
     this.titleService.setTitle('Wallets — Investee');
     this.load();
@@ -53,6 +59,10 @@ export class WalletsComponent implements OnInit {
       next: data => { this.wallets.set(data); this.loading.set(false); },
       error: e => { this.toastService.error(e.error?.message ?? 'Failed to load wallets'); this.loading.set(false); }
     });
+  }
+
+  isOwner(wallet: WalletDto): boolean {
+    return wallet.ownerId === this.authService.currentUser()?.userId;
   }
 
   openAddModal(): void { this.addModalOpen.set(true); }
@@ -75,6 +85,59 @@ export class WalletsComponent implements OnInit {
     this.editingWalletId.set(null);
     this.editForm.name.set('');
     this.editForm.description.set('');
+  }
+
+  openShareModal(wallet: WalletDto): void {
+    this.sharingWallet.set(wallet);
+    this.shareEmail.set('');
+    this.shareModalOpen.set(true);
+  }
+
+  closeShareModal(): void {
+    this.shareModalOpen.set(false);
+    this.sharingWallet.set(null);
+    this.shareEmail.set('');
+  }
+
+  addShare(): void {
+    const email = this.shareEmail().trim();
+    const wallet = this.sharingWallet();
+    if (!email || !wallet) return;
+
+    this.submitting.set(true);
+    this.walletService.shareWallet(wallet.id, email).subscribe({
+      next: () => {
+        this.toastService.success(`Shared with ${email}`);
+        this.shareEmail.set('');
+        this.submitting.set(false);
+        this.reloadSharingWallet(wallet.id);
+      },
+      error: e => {
+        this.toastService.error(e.error?.message ?? 'Failed to share wallet');
+        this.submitting.set(false);
+      }
+    });
+  }
+
+  removeShare(email: string): void {
+    const wallet = this.sharingWallet();
+    if (!wallet) return;
+
+    this.walletService.unshareWallet(wallet.id, email).subscribe({
+      next: () => {
+        this.toastService.success(`Removed ${email}`);
+        this.reloadSharingWallet(wallet.id);
+      },
+      error: e => this.toastService.error(e.error?.message ?? 'Failed to remove share')
+    });
+  }
+
+  private reloadSharingWallet(id: string): void {
+    this.walletService.getWallets().subscribe(data => {
+      this.wallets.set(data);
+      const updated = data.find(w => w.id === id);
+      if (updated) this.sharingWallet.set(updated);
+    });
   }
 
   submitEdit(): void {
