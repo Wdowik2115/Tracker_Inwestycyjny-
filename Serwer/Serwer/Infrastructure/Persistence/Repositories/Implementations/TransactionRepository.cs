@@ -10,6 +10,16 @@ namespace Investe.Infrastructure.Persistence.Repositories.Implementations
         {
         }
 
+        public async Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId, int count = 10)
+        {
+            return await _dbContext.Transactions
+                .Include(t => t.Wallet)
+                .Where(t => t.Wallet.UserId == userId)
+                .OrderByDescending(t => t.ExecutedAt)
+                .Take(count)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Transaction>> GetTransactionsByWalletIdAsync(Guid walletId)
         {
             return await _dbContext.Transactions

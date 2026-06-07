@@ -83,6 +83,35 @@ namespace Investe.Application.Services
             return Task.FromResult(new Dictionary<string, string>(SymbolToId));
         }
 
+        public async Task<IEnumerable<CoinMarketDataDto>> GetTopMoversAsync(int count = 10, bool ascending = false)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("CoinGecko");
+                var response = await client.GetStringAsync($"coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h");
+                using var doc = JsonDocument.Parse(response);
+                
+                var coins = doc.RootElement.EnumerateArray()
+                    .Select(c => new CoinMarketDataDto
+                    {
+                        Symbol = c.GetProperty("symbol").GetString()?.ToUpper() ?? "",
+                        Name = c.GetProperty("name").GetString() ?? "",
+                        CurrentPrice = c.GetProperty("current_price").GetDecimal(),
+                        PriceChangePercentage24h = c.TryGetProperty("price_change_percentage_24h", out var p) ? p.GetDecimal() : 0,
+                        MarketCap = c.GetProperty("market_cap").GetDecimal()
+                    });
+
+                return ascending 
+                    ? coins.OrderBy(c => c.PriceChangePercentage24h).Take(count)
+                    : coins.OrderByDescending(c => c.PriceChangePercentage24h).Take(count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching top movers from CoinGecko");
+                return Enumerable.Empty<CoinMarketDataDto>();
+            }
+        }
+
         /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>
         public async Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date)
         {

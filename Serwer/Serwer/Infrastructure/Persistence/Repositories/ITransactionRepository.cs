@@ -5,6 +5,7 @@ namespace Investe.Infrastructure.Persistence.Repositories
 {
     public interface ITransactionRepository : IBaseRepository<Transaction>
     {
+        Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId, int count = 10);
         Task<IEnumerable<Transaction>> GetTransactionsByWalletIdAsync(Guid walletId);
         
         Task<(IEnumerable<Transaction> Items, int TotalCount)> GetPagedTransactionsAsync(

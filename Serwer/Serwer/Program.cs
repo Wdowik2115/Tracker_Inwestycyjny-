@@ -12,6 +12,8 @@ using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
 using Serwer.BackgroundServices;
 using Serwer.Middleware;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace Serwer
 {
@@ -23,6 +25,16 @@ namespace Serwer
 
             var builder = WebApplication.CreateBuilder(args);
             
+            // ── Polly Policies ────────────────────────────────────────────────
+            var retryPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
+            var circuitBreakerPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+
             // Add local configuration for secrets
             builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
 
@@ -58,7 +70,9 @@ namespace Serwer
             builder.Services.AddHttpClient("Gemini", client =>
             {
                 client.BaseAddress = new Uri(builder.Configuration["Gemini:BaseUrl"]!);
-            });
+            })
+            .AddPolicyHandler(retryPolicy)
+            .AddPolicyHandler(circuitBreakerPolicy);
 
             // ── Repositories & Unit of Work ───────────────────────────────────
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -82,6 +96,7 @@ namespace Serwer
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IChatService, ChatService>();
             builder.Services.AddScoped<IWatchlistService, WatchlistService>();
+            builder.Services.AddScoped<IGeminiApiService, GeminiApiService>();
 
             // ── Background Services ───────────────────────────────────────────
             builder.Services.AddHostedService<PriceAlertBackgroundService>();
