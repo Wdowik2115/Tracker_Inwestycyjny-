@@ -102,6 +102,7 @@ namespace Investe.Application.Services
                 {
                     Symbol = asset.Symbol,
                     Name = asset.Name,
+                    ImageUrl = asset.ImageUrl,
                     Quantity = asset.Quantity,
                     AvgCostBasis = asset.AverageBuyPrice,
                     CurrentPrice = currentPrice,

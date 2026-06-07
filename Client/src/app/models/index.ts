@@ -120,6 +120,7 @@ export interface TransactionUpdateDto {
 export interface PositionDto {
   symbol: string;
   name: string;
+  imageUrl?: string;
   quantity: number;
   avgCostBasis: number;
   currentPrice: number;

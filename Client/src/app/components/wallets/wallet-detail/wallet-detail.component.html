@@ -164,9 +164,13 @@
                 <tr>
                   <td>
                     <div class="asset-cell">
-                      <div class="asset-icon" [style.background]="getAssetColor(asset.symbol)">
-                        {{ asset.symbol.slice(0, 3) }}
-                      </div>
+                      @if (asset.imageUrl) {
+                        <img class="asset-icon-img" [src]="asset.imageUrl" [alt]="asset.symbol" />
+                      } @else {
+                        <div class="asset-icon" [style.background]="getAssetColor(asset.symbol)">
+                          {{ asset.symbol.slice(0, 3) }}
+                        </div>
+                      }
                       <div class="asset-info">
                         <span class="asset-symbol">{{ asset.symbol }}</span>
                         @if (asset.name) {
@@ -231,9 +235,13 @@
                   </td>
                   <td>
                     <div class="asset-cell">
-                      <div class="asset-icon asset-icon-sm" [style.background]="getAssetColor(tx.symbol)">
-                        {{ tx.symbol.slice(0, 3) }}
-                      </div>
+                      @if (tx.imageUrl) {
+                        <img class="asset-icon-img" [src]="tx.imageUrl" [alt]="tx.symbol" />
+                      } @else {
+                        <div class="asset-icon asset-icon-sm" [style.background]="getAssetColor(tx.symbol)">
+                          {{ tx.symbol.slice(0, 3) }}
+                        </div>
+                      }
                       <div class="asset-info">
                         <span class="asset-symbol">{{ tx.symbol }}</span>
                       </div>
