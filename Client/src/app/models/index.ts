@@ -197,6 +197,7 @@ export interface WatchlistItemDto {
   id: string;
   coinId: string;
   symbol: string;
+  imageUrl?: string;
   currentPrice: number;
   addedAt: string;
 }
@@ -204,4 +205,5 @@ export interface WatchlistItemDto {
 export interface AddToWatchlistDto {
   coinId: string;
   symbol: string;
+  imageUrl?: string;
 }

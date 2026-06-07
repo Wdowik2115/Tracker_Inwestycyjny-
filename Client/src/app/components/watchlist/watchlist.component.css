@@ -46,46 +46,142 @@
   color: var(--text-secondary);
 }
 
-/* Autocomplete Suggestions */
-.autocomplete-wrapper {
+/* Coin search */
+.coin-search-wrapper {
   position: relative;
   flex: 1;
   max-width: 300px;
 }
 
-.autocomplete-wrapper .filter-input {
+.coin-search-wrapper .filter-input {
   width: 100%;
   max-width: none;
 }
 
-.suggestions-list {
+.coin-search-spinner {
   position: absolute;
-  top: 100%;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+.coin-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
   left: 0;
-  right: 0;
-  background: #111622; /* More solid background for better readability */
-  backdrop-filter: blur(20px);
+  width: 300px;
+  background: #0d0d0d !important;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-top: 6px;
-  padding: 4px 0;
-  list-style: none;
-  z-index: 1000;
+  border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 100;
   overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
-.suggestions-list li {
-  padding: 10px 16px;
-  cursor: pointer;
-  color: var(--text-primary);
+.coin-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  text-align: left;
+  background: #0d0d0d !important;
+  transition: background 0.12s;
+  border-bottom: 1px solid var(--border);
+}
+
+.coin-option:last-child {
+  border-bottom: none;
+}
+
+.coin-option:hover {
+  background: #1a1a1a !important;
+}
+
+.coin-option-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.coin-option-img--placeholder {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.coin-option-symbol {
+  font-weight: 700;
   font-size: 13px;
-  transition: background 0.15s;
+  color: var(--text-primary);
+  min-width: 44px;
 }
 
-.suggestions-list li:hover {
-  background: var(--bg-card);
-  color: var(--accent);
+.coin-option-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.coin-option-rank {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+/* Asset cell with image */
+.asset-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.asset-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.asset-img-placeholder {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
 /* Loading & Empty States */

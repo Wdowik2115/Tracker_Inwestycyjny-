@@ -59,11 +59,5 @@ namespace Serwer.Controllers
             return Ok(new { isOnWatchlist });
         }
 
-        [HttpGet("suggestions")]
-        public async Task<IActionResult> GetSuggestions([FromQuery] string query)
-        {
-            var suggestions = await _watchlistService.GetSuggestionsAsync(query);
-            return Ok(suggestions);
-        }
     }
 }

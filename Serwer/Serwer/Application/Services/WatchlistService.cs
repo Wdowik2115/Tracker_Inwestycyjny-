@@ -22,14 +22,7 @@ namespace Investe.Application.Services
             var symbols = items.Select(i => i.Symbol).Distinct();
             var prices = await _priceService.GetCurrentPricesAsync(symbols);
 
-            return items.Select(i => new WatchlistItemDto
-            {
-                Id = i.Id,
-                CoinId = i.CoinId,
-                Symbol = i.Symbol,
-                AddedAt = i.AddedAt,
-                CurrentPrice = prices.GetValueOrDefault(i.Symbol, 0)
-            });
+            return items.Select(i => MapToDto(i, prices.GetValueOrDefault(i.Symbol, 0)));
         }
 
         public async Task<WatchlistItemDto> GetWatchlistItemByIdAsync(Guid userId, Guid id)
@@ -54,7 +47,8 @@ namespace Investe.Application.Services
             {
                 UserId = userId,
                 CoinId = dto.CoinId,
-                Symbol = dto.Symbol
+                Symbol = dto.Symbol,
+                ImageUrl = dto.ImageUrl
             };
 
             await _unitOfWork.Watchlist.AddAsync(item);
@@ -81,20 +75,6 @@ namespace Investe.Application.Services
             return item != null;
         }
 
-        public async Task<IEnumerable<string>> GetSuggestionsAsync(string query)
-        {
-            if (string.IsNullOrWhiteSpace(query))
-                return Enumerable.Empty<string>();
-
-            var supportedCoins = await _priceService.GetSupportedCoinsAsync();
-            var q = query.ToUpperInvariant();
-
-            return supportedCoins.Keys
-                .Where(s => s.StartsWith(q))
-                .OrderBy(s => s)
-                .Take(5);
-        }
-
         private static WatchlistItemDto MapToDto(WatchlistItem item, decimal currentPrice)
         {
             return new WatchlistItemDto
@@ -102,6 +82,7 @@ namespace Investe.Application.Services
                 Id = item.Id,
                 CoinId = item.CoinId,
                 Symbol = item.Symbol,
+                ImageUrl = item.ImageUrl,
                 AddedAt = item.AddedAt,
                 CurrentPrice = currentPrice
             };

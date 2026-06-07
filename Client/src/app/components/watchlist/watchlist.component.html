@@ -3,43 +3,54 @@
     <h1 class="page-title">Watchlist</h1>
   </div>
 
-  <!-- The input is placed in a filter-bar to match the Transactions aesthetic -->
   <div class="filter-bar">
-    <div class="autocomplete-wrapper">
-      <input 
-        type="text" 
-        class="filter-input" 
-        placeholder="Enter Coin Symbol (e.g. BTC, ETH)..." 
-        [ngModel]="newCoinSymbol()"
-        (ngModelChange)="onSymbolInput($event)"
-        (keyup.enter)="addToWatchlist()"
-        (blur)="suggestions.set([])"
-        [disabled]="adding()">
-      
-      @if (suggestions().length > 0) {
-        <ul class="suggestions-list">
-          @for (s of suggestions(); track s) {
-            <li (mousedown)="selectSuggestion(s)">{{ s }}</li>
+    <div class="coin-search-wrapper">
+      <input
+        type="text"
+        class="filter-input"
+        placeholder="Search coin to add… (e.g. BTC, Ethereum)"
+        [value]="coinQuery()"
+        (input)="onCoinInput($any($event.target).value)"
+        (blur)="closeDropdownDelayed()"
+        [disabled]="adding()"
+        autocomplete="off" />
+
+      @if (coinSearching()) {
+        <span class="coin-search-spinner"></span>
+      }
+
+      @if (showDropdown() && coinSuggestions().length > 0) {
+        <div class="coin-dropdown">
+          @for (coin of coinSuggestions(); track coin.coinId) {
+            <button type="button" class="coin-option" (mousedown)="selectCoin(coin)">
+              @if (coin.imageUrl) {
+                <img class="coin-option-img" [src]="coin.imageUrl" [alt]="coin.symbol" />
+              } @else {
+                <span class="coin-option-img coin-option-img--placeholder">{{ coin.symbol[0] }}</span>
+              }
+              <span class="coin-option-symbol">{{ coin.symbol }}</span>
+              <span class="coin-option-name">{{ coin.name }}</span>
+              @if (coin.rank) {
+                <span class="coin-option-rank">#{{ coin.rank }}</span>
+              }
+            </button>
           }
-        </ul>
+        </div>
       }
     </div>
-    
-    <div class="text-secondary small ms-2" style="align-self: center;">
+
+    <span class="text-secondary" style="font-size: 13px; align-self: center;">
       {{ watchlist().length }} assets monitored
-    </div>
+    </span>
   </div>
 
   @if (loading()) {
     <div class="center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+      <div class="loading-dots"></div>
     </div>
   } @else if (watchlist().length === 0) {
     <div class="empty-state">
-      <div class="empty-icon"><i class="bi bi-eye"></i></div>
-      <p>Your watchlist is empty. Add symbols above to start monitoring.</p>
+      <p>Your watchlist is empty. Search for a coin above to start monitoring.</p>
     </div>
   } @else {
     <div class="table-wrapper">
@@ -56,15 +67,17 @@
           @for (item of watchlist(); track item.id) {
             <tr>
               <td class="asset-cell">
-                <span class="asset-symbol">{{ item.symbol }}</span>
-                <span class="text-secondary small text-uppercase ms-2">{{ item.coinId }}</span>
+                <div class="asset-info">
+                  @if (item.imageUrl) {
+                    <img class="asset-img" [src]="item.imageUrl" [alt]="item.symbol" />
+                  } @else {
+                    <span class="asset-img-placeholder">{{ item.symbol[0] }}</span>
+                  }
+                  {{ item.symbol }}
+                </div>
               </td>
-              <td class="price-cell">
-                {{ formatCurrency(item.currentPrice) }}
-              </td>
-              <td class="text-secondary">
-                {{ formatDate(item.addedAt) }}
-              </td>
+              <td class="price-cell">{{ formatCurrency(item.currentPrice) }}</td>
+              <td class="text-secondary">{{ formatDate(item.addedAt) }}</td>
               <td class="row-actions text-end">
                 <button class="icon-btn icon-btn--danger" (click)="removeFromWatchlist(item.id)" title="Remove from watchlist">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

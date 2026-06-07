@@ -357,16 +357,17 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  right: 0;
-  background: var(--bg-card);
+  width: 300px;
+  background: #0d0d0d !important;
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   z-index: 100;
   overflow: hidden;
   max-height: 280px;
   overflow-y: auto;
 }
+
 
 .coin-option {
   display: flex;
@@ -375,6 +376,7 @@
   width: 100%;
   padding: 9px 12px;
   text-align: left;
+  background: #0d0d0d !important;
   transition: background 0.12s;
   border-bottom: 1px solid var(--border);
 }
@@ -384,7 +386,7 @@
 }
 
 .coin-option:hover {
-  background: var(--bg-surface);
+  background: #1a1a1a !important;
 }
 
 .coin-option-img {
@@ -417,9 +419,6 @@
   font-size: 13px;
   color: var(--text-secondary);
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .coin-option-rank {

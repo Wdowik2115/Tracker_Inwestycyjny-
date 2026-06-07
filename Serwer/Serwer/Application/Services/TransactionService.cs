@@ -110,7 +110,7 @@ namespace Investe.Application.Services
             await _unitOfWork.CompleteAsync();
 
             _logger.LogInformation("Transaction {TxId} saved for wallet {WalletId}", transaction.Id, dto.WalletId);
-            return transaction.ToDto();
+            return transaction.ToDto(dto.ImageUrl);
         }
 
         /// <summary>Returns all transactions across all wallets owned by the user.</summary>
@@ -152,7 +152,20 @@ namespace Investe.Application.Services
             var (items, totalCount) = await _unitOfWork.Transactions.GetPagedTransactionsAsync(
                 userId, page, pageSize, walletId, symbol, startDateTime, endDateTime);
 
-            return (items.Select(t => t.ToDto()), totalCount);
+            var wallets = await _unitOfWork.Wallets.GetWalletsByUserIdAsync(userId);
+            var allAssets = new List<Investe.Domain.Entities.Asset>();
+            foreach (var w in wallets)
+                allAssets.AddRange(await _unitOfWork.Assets.GetAssetsByWalletIdAsync(w.Id));
+
+            var imagesByCoinId = allAssets
+                .Where(a => a.ImageUrl != null)
+                .GroupBy(a => a.CoinId)
+                .ToDictionary(g => g.Key, g => g.First().ImageUrl);
+
+            return (items.Select(t => {
+                imagesByCoinId.TryGetValue(t.CoinId, out var img);
+                return t.ToDto(img);
+            }), totalCount);
         }
 
         /// <summary>Deletes a transaction and reverses its effect on the asset position.</summary>
