@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Serwer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260511185434_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260606212319_AddWatchlist")]
+    partial class AddWatchlist
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,6 +101,76 @@ namespace Serwer.Migrations
                     b.ToTable("PriceAlerts");
                 });
 
+            modelBuilder.Entity("Investe.Domain.Entities.PriceHistoryCache", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoinId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PriceUsd")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoinId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("PriceHistoryCache");
+                });
+
+            modelBuilder.Entity("Investe.Domain.Entities.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("WalletId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("Reports");
+                });
+
             modelBuilder.Entity("Investe.Domain.Entities.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -120,6 +190,14 @@ namespace Serwer.Migrations
 
                     b.Property<DateTime>("ExecutedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Fee")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<string>("FeeCurrency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
                         .IsRequired()
@@ -167,7 +245,17 @@ namespace Serwer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PreferredCurrency")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -206,6 +294,33 @@ namespace Serwer.Migrations
                     b.ToTable("Wallets");
                 });
 
+            modelBuilder.Entity("Investe.Domain.Entities.WatchlistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CoinId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Watchlist");
+                });
+
             modelBuilder.Entity("Investe.Domain.Entities.Asset", b =>
                 {
                     b.HasOne("Investe.Domain.Entities.Wallet", "Wallet")
@@ -226,6 +341,24 @@ namespace Serwer.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Investe.Domain.Entities.Report", b =>
+                {
+                    b.HasOne("Investe.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Investe.Domain.Entities.Wallet", "Wallet")
+                        .WithMany()
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("User");
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("Investe.Domain.Entities.Transaction", b =>
@@ -250,11 +383,24 @@ namespace Serwer.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Investe.Domain.Entities.WatchlistItem", b =>
+                {
+                    b.HasOne("Investe.Domain.Entities.User", "User")
+                        .WithMany("WatchlistItems")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Investe.Domain.Entities.User", b =>
                 {
                     b.Navigation("PriceAlerts");
 
                     b.Navigation("Wallets");
+
+                    b.Navigation("WatchlistItems");
                 });
 
             modelBuilder.Entity("Investe.Domain.Entities.Wallet", b =>

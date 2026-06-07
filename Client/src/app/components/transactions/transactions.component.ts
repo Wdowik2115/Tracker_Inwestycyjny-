@@ -1,5 +1,6 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { TransactionService } from '../../services/transaction.service';
 import { WalletService } from '../../services/wallet.service';
 import { ToastService } from '../../services/toast.service';
@@ -20,14 +21,19 @@ export class TransactionsComponent implements OnInit {
   private walletService = inject(WalletService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
+  private route = inject(ActivatedRoute);
 
   loading = signal(true);
   transactions = signal<TransactionDto[]>([]);
+  totalCount = signal(0);
   wallets = toSignal(this.walletService.getWallets(), { initialValue: [] as WalletDto[] });
 
   filterAsset = signal('');
-  filterSide = signal<'all' | 'buy' | 'sell'>('all');
-  page = signal(0);
+  filterWallet = signal('');
+  filterStartDate = signal('');
+  filterEndDate = signal('');
+  
+  page = signal(1);
   readonly PAGE_SIZE = 20;
 
   addModalOpen = signal(false);
@@ -40,45 +46,79 @@ export class TransactionsComponent implements OnInit {
     type: signal<'buy' | 'sell'>('buy'),
     quantity: signal(''),
     priceAtTime: signal(''),
+    fee: signal('0'),
+    feeCurrency: signal('USDT'),
     executedAt: signal(''),
     walletId: signal(''),
     notes: signal('')
   };
 
   editForm = {
+    quantity: signal(''),
     priceAtTime: signal(''),
+    fee: signal(''),
+    feeCurrency: signal(''),
     executedAt: signal(''),
     notes: signal(''),
     costBasisPerUnit: signal('')
   };
 
-  filtered = computed(() => {
-    const asset = this.filterAsset().toLowerCase();
-    const side = this.filterSide();
-    return this.transactions().filter(t => {
-      const matchAsset = !asset || t.symbol.toLowerCase().includes(asset);
-      const matchSide = side === 'all' || t.type.toLowerCase() === side;
-      return matchAsset && matchSide;
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.PAGE_SIZE));
+
+  constructor() {
+    // Automatically reload when filters change
+    effect(() => {
+      // Access signals to track them
+      this.filterAsset();
+      this.filterWallet();
+      this.filterStartDate();
+      this.filterEndDate();
+      this.page();
+
+      this.load();
     });
-  });
-
-  paged = computed(() => {
-    const p = this.page();
-    return this.filtered().slice(p * this.PAGE_SIZE, (p + 1) * this.PAGE_SIZE);
-  });
-
-  totalPages = computed(() => Math.ceil(this.filtered().length / this.PAGE_SIZE));
+  }
 
   ngOnInit(): void {
     this.titleService.setTitle('Transactions — Investee');
-    this.load();
+    this.handleQueryParams();
+  }
+
+  private handleQueryParams(): void {
+    const walletId = this.route.snapshot.queryParamMap.get('walletId');
+    const add = this.route.snapshot.queryParamMap.get('add');
+    if (walletId) {
+      this.form.walletId.set(walletId);
+    }
+    if (add === 'true') {
+      this.openAddModal();
+    }
   }
 
   load(): void {
     this.loading.set(true);
-    this.transactionService.getTransactions().subscribe({
-      next: data => { this.transactions.set(data); this.loading.set(false); },
-      error: e => { this.toastService.error(e.error?.message ?? 'Failed to load transactions'); this.loading.set(false); }
+    
+    // Create params object with only defined values to avoid sending "undefined" as string
+    const params: any = {
+      page: this.page(),
+      pageSize: this.PAGE_SIZE
+    };
+
+    if (this.filterAsset()) params.symbol = this.filterAsset();
+    if (this.filterWallet()) params.walletId = this.filterWallet();
+    if (this.filterStartDate()) params.startDate = this.filterStartDate();
+    if (this.filterEndDate()) params.endDate = this.filterEndDate();
+
+    this.transactionService.getTransactions(params).subscribe({
+      next: data => { 
+        this.transactions.set(data.items); 
+        this.totalCount.set(data.totalCount);
+        this.loading.set(false); 
+      },
+      error: e => { 
+        this.toastService.error(e.error?.message ?? 'Failed to load transactions'); 
+        this.loading.set(false); 
+      }
     });
   }
 
@@ -96,6 +136,8 @@ export class TransactionsComponent implements OnInit {
     this.form.type.set('buy');
     this.form.quantity.set('');
     this.form.priceAtTime.set('');
+    this.form.fee.set('0');
+    this.form.feeCurrency.set('USDT');
     this.form.executedAt.set('');
     this.form.walletId.set('');
     this.form.notes.set('');
@@ -104,6 +146,8 @@ export class TransactionsComponent implements OnInit {
   submitAdd(): void {
     const qty = parseFloat(this.form.quantity());
     const price = parseFloat(this.form.priceAtTime());
+    const fee = parseFloat(this.form.fee());
+    
     if (!this.form.symbol() || isNaN(qty) || isNaN(price) || !this.form.walletId()) {
       this.toastService.error('Please fill in all required fields');
       return;
@@ -114,6 +158,8 @@ export class TransactionsComponent implements OnInit {
       type: this.form.type(),
       quantity: qty,
       priceAtTime: price,
+      fee: isNaN(fee) ? 0 : fee,
+      feeCurrency: this.form.feeCurrency(),
       walletId: this.form.walletId(),
       executedAt: this.form.executedAt() || undefined,
       notes: this.form.notes()
@@ -135,8 +181,11 @@ export class TransactionsComponent implements OnInit {
 
   openEditModal(tx: TransactionDto): void {
     this.editingTx.set(tx);
+    this.editForm.quantity.set(String(tx.quantity));
     this.editForm.priceAtTime.set(String(tx.priceAtTime));
-    this.editForm.executedAt.set(tx.executedAt ? new Date(tx.executedAt).toISOString().slice(0, 16) : '');
+    this.editForm.fee.set(String(tx.fee));
+    this.editForm.feeCurrency.set(tx.feeCurrency);
+    this.editForm.executedAt.set(tx.executedAt ? tx.executedAt : '');
     this.editForm.notes.set(tx.notes ?? '');
     this.editForm.costBasisPerUnit.set(tx.costBasisPerUnit != null ? String(tx.costBasisPerUnit) : '');
     this.editModalOpen.set(true);
@@ -151,14 +200,20 @@ export class TransactionsComponent implements OnInit {
     const tx = this.editingTx();
     if (!tx) return;
 
+    const qty = parseFloat(this.editForm.quantity());
     const price = parseFloat(this.editForm.priceAtTime());
-    if (isNaN(price) || price <= 0) {
-      this.toastService.error('Price must be a positive number');
+    const fee = parseFloat(this.editForm.fee());
+    
+    if (isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0) {
+      this.toastService.error('Quantity and price must be positive numbers');
       return;
     }
 
     const dto: TransactionUpdateDto = {
+      quantity: qty,
       priceAtTime: price,
+      fee: isNaN(fee) ? 0 : fee,
+      feeCurrency: this.editForm.feeCurrency(),
       executedAt: this.editForm.executedAt() || undefined,
       notes: this.editForm.notes(),
       costBasisPerUnit: this.editForm.costBasisPerUnit() ? parseFloat(this.editForm.costBasisPerUnit()) : undefined
@@ -187,8 +242,19 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  prevPage(): void { this.page.update(p => Math.max(0, p - 1)); }
-  nextPage(): void { this.page.update(p => Math.min(this.totalPages() - 1, p + 1)); }
+  prevPage(): void { 
+    if (this.page() > 1) {
+      this.page.update(p => p - 1); 
+      this.load();
+    }
+  }
+
+  nextPage(): void { 
+    if (this.page() < this.totalPages()) {
+      this.page.update(p => p + 1); 
+      this.load();
+    }
+  }
 
   formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

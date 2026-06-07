@@ -21,15 +21,18 @@ namespace Investe.Application.Mappings
             {
                 Id = t.Id,
                 WalletId = t.WalletId,
+                WalletName = t.Wallet?.Name ?? "Unknown",
                 CoinId = t.CoinId,
                 Symbol = t.Symbol,
                 Type = t.Type.ToString(),
                 Quantity = t.Quantity,
                 PriceAtTime = t.PriceAtTime,
                 TotalValue = t.TotalValue,
+                Fee = t.Fee,
+                FeeCurrency = t.FeeCurrency,
                 CostBasisPerUnit = t.CostBasisPerUnit,
                 CostBasisSource = t.CostBasisSource,
-                ExecutedAt = t.ExecutedAt,
+                ExecutedAt = DateOnly.FromDateTime(t.ExecutedAt),
                 Notes = t.Notes
             };
         }

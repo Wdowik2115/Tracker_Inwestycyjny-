@@ -9,11 +9,13 @@ namespace Investe.Domain.Entities
         public decimal Quantity { get; set; }
         public decimal PriceAtTime { get; set; }
         public decimal TotalValue { get; set; }
+        public decimal Fee { get; set; }
+        public string FeeCurrency { get; set; } = "USDT";
         public decimal? CostBasisPerUnit { get; set; }
         public string? CostBasisSource { get; set; }
         public DateTime ExecutedAt { get; set; } = DateTime.UtcNow;
         public string Notes { get; set; } = string.Empty;
         public Guid WalletId { get; set; }
-        public virtual Wallet Wallet { get; set; } = null!;
+        public Wallet Wallet { get; set; } = null!;
     }
 }

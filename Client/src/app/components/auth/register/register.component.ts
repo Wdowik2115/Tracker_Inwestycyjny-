@@ -1,17 +1,19 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { RegisterDto } from '../../../models';
+import { CryptoBackgroundComponent } from '../../shared/crypto-background/crypto-background.component';
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, FormsModule, RouterLink],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink, CryptoBackgroundComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   email = signal('');
   password = signal('');
   confirmPassword = signal('');
@@ -22,6 +24,36 @@ export class RegisterComponent {
     private authService: AuthService,
     private router: Router
   ) {}
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
+  hasUpperCase(str: string): boolean {
+    return /[A-Z]/.test(str);
+  }
+
+  hasNumber(str: string): boolean {
+    return /[0-9]/.test(str);
+  }
+
+  hasSpecialChar(str: string): boolean {
+    return /[^a-zA-Z0-9]/.test(str);
+  }
+
+  isFormValid(): boolean {
+    const p = this.password();
+    return (
+      this.email().includes('@') &&
+      p.length >= 8 &&
+      this.hasUpperCase(p) &&
+      this.hasNumber(p) &&
+      this.hasSpecialChar(p) &&
+      p === this.confirmPassword()
+    );
+  }
 
   onSubmit(): void {
     if (this.password() !== this.confirmPassword()) {

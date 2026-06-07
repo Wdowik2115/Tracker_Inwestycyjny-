@@ -6,5 +6,8 @@ namespace Investe.Application.DTOs
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public decimal TotalValue { get; set; }
+        public int AssetCount { get; set; }
+        public decimal Pnl { get; set; }
+        public decimal PnlPercent { get; set; }
     }
 }

@@ -21,12 +21,21 @@ namespace Investe.Application.Services
             _config = config;
         }
 
-        /// <summary>Registers a new user and returns a JWT. Throws ArgumentException if email already exists.</summary>
+        /// <summary>Registers a new user and returns a JWT. Throws ArgumentException if email already exists or password is too weak.</summary>
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
         {
-            var existing = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
+            var existing = await _unitOfWork.Users.GetByEmailAsync(dto.Email.ToLowerInvariant());
             if (existing != null)
                 throw new ArgumentException("Email is already registered.");
+
+            // Password validation
+            if (dto.Password.Length < 8 ||
+                !dto.Password.Any(char.IsUpper) ||
+                !dto.Password.Any(char.IsDigit) ||
+                !dto.Password.Any(ch => !char.IsLetterOrDigit(ch)))
+            {
+                throw new ArgumentException("Password does not meet requirements.");
+            }
 
             var user = new User
             {

@@ -1,0 +1,104 @@
+.portfolio-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 80px;
+  background: rgba(13, 17, 28, 0.7);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 40px; /* Cloud effect */
+  padding: 0 40px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.header-stats-centered {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-value.big-text {
+  font-size: 22px;
+}
+
+.glow-text {
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.stat-value-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-badge {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.icon-action-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  border: none;
+  margin-left: 20px;
+}
+
+.icon-action-btn:hover {
+  background: var(--accent);
+  color: #000;
+  transform: rotate(15deg) scale(1.1);
+}
+
+.welcome-message-centered {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+/* Auth Section is now hidden here, moved to Sidebar */
+.auth-section {
+  display: none;
+}

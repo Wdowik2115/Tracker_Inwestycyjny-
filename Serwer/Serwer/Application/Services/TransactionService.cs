@@ -34,7 +34,7 @@ namespace Investe.Application.Services
 
             var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(dto.WalletId);
             var asset = assets.FirstOrDefault(a => a.CoinId == dto.CoinId);
-            var executedAt = dto.ExecutedAt?.ToUniversalTime() ?? DateTime.UtcNow;
+            var executedAt = dto.ExecutedAt?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today;
 
             if (dto.Type.Equals("Buy", StringComparison.OrdinalIgnoreCase))
             {
@@ -98,6 +98,8 @@ namespace Investe.Application.Services
                 Quantity = dto.Quantity,
                 PriceAtTime = dto.PriceAtTime,
                 TotalValue = dto.Quantity * dto.PriceAtTime,
+                Fee = dto.Fee,
+                FeeCurrency = dto.FeeCurrency,
                 CostBasisPerUnit = costBasis,
                 CostBasisSource = costBasisSource,
                 ExecutedAt = executedAt,
@@ -124,6 +126,24 @@ namespace Investe.Application.Services
             }
 
             return result.OrderByDescending(t => t.ExecutedAt);
+        }
+
+        public async Task<(IEnumerable<TransactionDto> Items, int TotalCount)> GetPagedTransactionsAsync(
+            Guid userId, 
+            int page, 
+            int pageSize, 
+            Guid? walletId = null, 
+            string? symbol = null, 
+            DateOnly? startDate = null, 
+            DateOnly? endDate = null)
+        {
+            var startDateTime = startDate?.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = endDate?.ToDateTime(TimeOnly.MaxValue);
+
+            var (items, totalCount) = await _unitOfWork.Transactions.GetPagedTransactionsAsync(
+                userId, page, pageSize, walletId, symbol, startDateTime, endDateTime);
+
+            return (items.Select(t => t.ToDto()), totalCount);
         }
 
         /// <summary>Deletes a transaction and reverses its effect on the asset position.</summary>
@@ -187,7 +207,7 @@ namespace Investe.Application.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        /// <summary>Updates editable metadata fields of a transaction and adjusts the asset position when price changes.</summary>
+        /// <summary>Updates editable fields and adjusts the asset position when quantity or price changes.</summary>
         public async Task<TransactionDto> UpdateTransactionAsync(Guid userId, Guid transactionId, TransactionUpdateDto dto)
         {
             var transaction = await _unitOfWork.Transactions.GetByIdAsync(transactionId)
@@ -199,30 +219,60 @@ namespace Investe.Application.Services
             if (wallet.UserId != userId)
                 throw new UnauthorizedAccessException("Transaction does not belong to this user.");
 
-            if (dto.PriceAtTime.HasValue)
+            var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
+            var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);
+
+            // Handle Quantity and Price changes affecting Asset
+            if ((dto.Quantity.HasValue && dto.Quantity.Value != transaction.Quantity) || 
+                (dto.PriceAtTime.HasValue && dto.PriceAtTime.Value != transaction.PriceAtTime))
             {
-                // For Buy transactions, re-weight the asset's average cost to reflect the corrected price.
-                if (transaction.Type == TransactionType.Buy)
+                var newQty = dto.Quantity ?? transaction.Quantity;
+                var newPrice = dto.PriceAtTime ?? transaction.PriceAtTime;
+
+                if (asset != null)
                 {
-                    var assets = await _unitOfWork.Assets.GetAssetsByWalletIdAsync(transaction.WalletId);
-                    var asset = assets.FirstOrDefault(a => a.CoinId == transaction.CoinId);
-                    if (asset != null && asset.Quantity > 0)
+                    if (transaction.Type == TransactionType.Buy)
                     {
-                        var oldContribution = transaction.Quantity * transaction.PriceAtTime;
-                        var newContribution = transaction.Quantity * dto.PriceAtTime.Value;
-                        var newAvgCost = (asset.Quantity * asset.AverageBuyPrice - oldContribution + newContribution) / asset.Quantity;
-                        asset.AverageBuyPrice = Math.Max(0m, newAvgCost);
-                        await _unitOfWork.Assets.UpdateAsync(asset);
+                        // Reverse old buy
+                        var qtyWithoutOld = asset.Quantity - transaction.Quantity;
+                        var totalCostWithoutOld = (asset.Quantity * asset.AverageBuyPrice) - (transaction.Quantity * transaction.PriceAtTime);
+                        
+                        // Apply new buy
+                        asset.Quantity = qtyWithoutOld + newQty;
+                        if (asset.Quantity > 0)
+                            asset.AverageBuyPrice = (totalCostWithoutOld + (newQty * newPrice)) / asset.Quantity;
+                        else
+                            asset.AverageBuyPrice = 0;
                     }
+                    else if (transaction.Type == TransactionType.Sell)
+                    {
+                        // Reverse old sell, apply new sell
+                        var qtyWithoutOld = asset.Quantity + transaction.Quantity;
+                        asset.Quantity = qtyWithoutOld - newQty;
+                    }
+
+                    if (asset.Quantity < 0)
+                        throw new InvalidOperationException("Update would result in negative asset quantity.");
+
+                    if (asset.Quantity == 0)
+                        await _unitOfWork.Assets.DeleteAsync(asset);
+                    else
+                        await _unitOfWork.Assets.UpdateAsync(asset);
                 }
 
-                transaction.PriceAtTime = dto.PriceAtTime.Value;
-                transaction.TotalValue = transaction.Quantity * dto.PriceAtTime.Value;
+                transaction.Quantity = newQty;
+                transaction.PriceAtTime = newPrice;
+                transaction.TotalValue = newQty * newPrice;
             }
+
+            if (dto.Fee.HasValue)
+                transaction.Fee = dto.Fee.Value;
+            if (dto.FeeCurrency != null)
+                transaction.FeeCurrency = dto.FeeCurrency;
             if (dto.CostBasisPerUnit.HasValue)
                 transaction.CostBasisPerUnit = dto.CostBasisPerUnit.Value;
             if (dto.ExecutedAt.HasValue)
-                transaction.ExecutedAt = dto.ExecutedAt.Value.ToUniversalTime();
+                transaction.ExecutedAt = dto.ExecutedAt.Value.ToDateTime(TimeOnly.MinValue);
             if (dto.Notes is not null)
                 transaction.Notes = dto.Notes;
 

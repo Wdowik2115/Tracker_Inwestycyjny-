@@ -160,5 +160,44 @@ namespace Serwer.Tests.Application.Services
             transRepo.Verify(r => r.AddAsync(It.IsAny<Transaction>()), Times.Once);
             uow.Verify(u => u.CompleteAsync(), Times.Once);
         }
+
+        [Fact]
+        public async Task UpdateTransactionAsync_Buy_ChangeQtyAndPrice_RecalculatesAssetAverageCost()
+        {
+            var userId = Guid.NewGuid();
+            var walletId = Guid.NewGuid();
+            var txId = Guid.NewGuid();
+            var (uow, _, assetRepo, transRepo, _, svc) = BuildSut(userId, walletId);
+
+            // Asset currently has 10 units with avg price 50 (total cost 500)
+            // One of those units came from this transaction: 2 units at 40 (contribution 80)
+            var asset = new Asset { WalletId = walletId, CoinId = "btc", Quantity = 10m, AverageBuyPrice = 50m };
+            var tx = new Transaction 
+            { 
+                Id = txId, 
+                WalletId = walletId, 
+                CoinId = "btc", 
+                Type = TransactionType.Buy, 
+                Quantity = 2m, 
+                PriceAtTime = 40m 
+            };
+
+            transRepo.Setup(r => r.GetByIdAsync(txId)).ReturnsAsync(tx);
+            assetRepo.Setup(r => r.GetAssetsByWalletIdAsync(walletId)).ReturnsAsync(new List<Asset> { asset });
+
+            var dto = new TransactionUpdateDto { Quantity = 4m, PriceAtTime = 60m }; // Total contribution: 240
+
+            await svc.UpdateTransactionAsync(userId, txId, dto);
+
+            // Calculation:
+            // totalCostWithoutOld = 500 - (2 * 40) = 420
+            // qtyWithoutOld = 10 - 2 = 8
+            // newQty = 8 + 4 = 12
+            // newTotalCost = 420 + (4 * 60) = 420 + 240 = 660
+            // newAvg = 660 / 12 = 55
+            Assert.Equal(12m, asset.Quantity);
+            Assert.Equal(55m, asset.AverageBuyPrice);
+            uow.Verify(u => u.CompleteAsync(), Times.Once);
+        }
     }
 }

@@ -55,10 +55,11 @@ namespace Serwer.Tests.Application.Services
             Assert.Equal("BTC", pos.Symbol);
             Assert.Equal(2m, pos.Quantity);
             Assert.Equal(35000m, pos.CurrentPrice);
-            Assert.Equal(70000m, pos.ValueUsdt);    // 2 * 35000
-            Assert.Equal(10000m, pos.PnlUsdt);      // 70000 - 60000
-            Assert.Equal(70000m, summary.TotalValueUsdt);
-            Assert.Equal(10000m, summary.TotalPnlUsdt);
+            Assert.Equal(70000m, pos.Value);        // 2 * 35000
+            Assert.Equal(10000m, pos.Pnl);          // 70000 - 60000
+            Assert.Equal(70000m, summary.TotalValue);
+            Assert.Equal(10000m, summary.TotalPnl);
+            Assert.Equal(60000m, summary.TotalInvested); // 2 * 30000
         }
 
         [Fact]
@@ -72,8 +73,9 @@ namespace Serwer.Tests.Application.Services
             var summary = await svc.GetSummaryAsync(userId);
 
             Assert.Empty(summary.Positions);
-            Assert.Equal(0m, summary.TotalValueUsdt);
-            Assert.Equal(0m, summary.TotalPnlUsdt);
+            Assert.Equal(0m, summary.TotalValue);
+            Assert.Equal(0m, summary.TotalPnl);
+            Assert.Equal(0m, summary.TotalInvested);
         }
     }
 }

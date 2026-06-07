@@ -96,6 +96,11 @@
   text-align: left;
   transition: background 0.15s;
   margin-bottom: 2px;
+  text-decoration: none;
+  color: inherit;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
 .source-card:hover {
@@ -103,7 +108,7 @@
 }
 
 .source-card--active {
-  background: rgba(245, 166, 35, 0.08);
+  background: rgba(245, 166, 35, 0.08) !important;
 }
 
 .source-icon {
@@ -153,6 +158,36 @@
   color: var(--text-primary);
 }
 
+/* Nav link */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  width: 100%;
+}
+
+.nav-link svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.nav-link:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.nav-link--active {
+  color: var(--accent);
+  background: rgba(245, 166, 35, 0.08);
+}
+
 /* Profile block */
 .sidebar-profile {
   display: flex;
@@ -168,24 +203,27 @@
   align-items: center;
   gap: 8px;
   overflow: hidden;
+  flex: 1;
 }
 
-.profile-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #000;
-  font-size: 12px;
-  font-weight: 700;
+.profile-text {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-email {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;

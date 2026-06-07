@@ -15,15 +15,49 @@ export interface AuthResponseDto {
   email: string;
 }
 
+// User models
+export interface UserDto {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  preferredCurrency: string;
+  createdAt: string;
+}
+
+export interface UpdateProfileDto {
+  firstName?: string;
+  lastName?: string;
+  preferredCurrency: string;
+}
+
+export interface ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
+
 // Wallet models
 export interface WalletDto {
   id: string;
   name: string;
   description: string;
   totalValue: number;
+  assetCount: number;
+  pnl: number;
+  pnlPercent: number;
+}
+
+export interface WalletDetailsDto extends WalletDto {
+  assets: PositionDto[];
+  realizedPnl: number;
 }
 
 export interface CreateWalletDto {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateWalletDto {
   name: string;
   description?: string;
 }
@@ -32,12 +66,15 @@ export interface CreateWalletDto {
 export interface TransactionDto {
   id: string;
   walletId: string;
+  walletName: string;
   coinId: string;
   symbol: string;
   type: string;
   quantity: number;
   priceAtTime: number;
   totalValue: number;
+  fee: number;
+  feeCurrency: string;
   costBasisPerUnit?: number;
   costBasisSource?: string;
   executedAt: string;
@@ -51,13 +88,18 @@ export interface TransactionCreateDto {
   type: string;
   quantity: number;
   priceAtTime: number;
+  fee?: number;
+  feeCurrency?: string;
   costBasisPerUnit?: number;
   executedAt?: string;
   notes: string;
 }
 
 export interface TransactionUpdateDto {
+  quantity?: number;
   priceAtTime?: number;
+  fee?: number;
+  feeCurrency?: string;
   costBasisPerUnit?: number;
   executedAt?: string;
   notes?: string;
@@ -66,18 +108,31 @@ export interface TransactionUpdateDto {
 // Portfolio models
 export interface PositionDto {
   symbol: string;
+  name: string;
   quantity: number;
   avgCostBasis: number;
   currentPrice: number;
-  valueUsdt: number;
-  pnlUsdt: number;
+  value: number;
+  pnl: number;
   pnlPercent: number;
 }
 
 export interface PortfolioSummaryDto {
   positions: PositionDto[];
-  totalValueUsdt: number;
-  totalPnlUsdt: number;
+  totalValue: number;
+  totalPnl: number;
+  totalInvested: number;
+}
+
+// History models
+export interface HistoryPoint {
+  date: string;   // ISO date string from backend
+  value: number;
+}
+
+export interface WalletHistoryDto {
+  walletId: string;
+  points: HistoryPoint[];
 }
 
 // Alert models
@@ -105,4 +160,37 @@ export interface CreateAlertDto {
 export interface UpdateAlertDto {
   targetPrice?: number;
   direction?: AlertDirection;
+}
+
+// Report models
+export interface ReportDto {
+  id: string;
+  title: string;
+  fileName: string;
+  type: string;
+  walletName?: string;
+  fileSizeBytes: number;
+  generatedAt: string;
+}
+
+// Chat models
+export interface ChatMessageDto {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+
+// Watchlist models
+export interface WatchlistItemDto {
+  id: string;
+  coinId: string;
+  symbol: string;
+  currentPrice: number;
+  addedAt: string;
+}
+
+export interface AddToWatchlistDto {
+  coinId: string;
+  symbol: string;
 }

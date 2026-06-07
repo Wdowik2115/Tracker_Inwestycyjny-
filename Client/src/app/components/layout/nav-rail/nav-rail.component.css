@@ -1,58 +1,169 @@
-.nav-rail {
+.sidebar {
   width: var(--rail-width);
-  min-width: var(--rail-width);
   height: 100vh;
-  background: var(--bg-surface);
-  border-left: 1px solid var(--border);
+  background: rgba(5, 7, 10, 0.98);
+  backdrop-filter: blur(32px);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 16px 0;
-  gap: 4px;
-  position: sticky;
-  top: 0;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  z-index: 1000;
+  position: relative;
 }
 
-.nav-item {
+.sidebar:hover {
+  width: var(--sidebar-width);
+}
+
+.sidebar-header {
+  padding: 40px 0;
+  display: flex;
+  justify-content: flex-start;
+  width: var(--sidebar-width);
+  padding-left: 18px; /* Fixed anchor for logo */
+  flex-shrink: 0;
+}
+
+.brand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  text-decoration: none;
+  color: var(--accent);
+  width: 100%;
+}
+
+.logo-box {
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 0 15px rgba(245, 166, 35, 0.6));
+  animation: logo-spin 10s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.brand-name {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1.5px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  white-space: nowrap;
+  animation: text-breath 3s ease-in-out infinite;
+  margin-left: 16px;
+}
+
+@keyframes text-breath {
+  0%, 100% { text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+  50% { text-shadow: 0 0 20px var(--accent); }
+}
+
+.sidebar:hover .brand-name {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.menu-links {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  width: var(--sidebar-width);
+}
+
+.menu-item {
+  height: 56px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-decoration: none;
   color: var(--text-secondary);
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  padding-left: 18px; /* Fixed anchor for icons */
 }
 
-.nav-item svg {
-  width: 20px;
-  height: 20px;
+.menu-item:hover {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.nav-item:hover {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.nav-item.active {
+.menu-item.active {
   color: var(--accent);
   background: rgba(245, 166, 35, 0.1);
 }
 
+.icon {
+  width: 44px; /* Matches logo box width */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+  margin-left: 16px;
+}
+
+.sidebar:hover .label {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* Fixed Logout at Bottom */
+.menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 12px 18px;
+}
+
+.logout-item {
+  margin-top: auto;
+  margin-bottom: 32px;
+  color: var(--danger) !important;
+  cursor: pointer;
+}
+
+.logout-item:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
 @media (max-width: 768px) {
-  .nav-rail {
+  .sidebar {
     position: fixed;
     bottom: 0;
     left: 0;
-    right: 0;
-    top: auto;
-    width: 100%;
+    width: 100% !important;
     height: var(--rail-width);
     flex-direction: row;
-    justify-content: space-around;
-    border-left: none;
+    padding: 0 16px;
+    border-right: none;
     border-top: 1px solid var(--border);
-    z-index: 100;
-    padding: 0 8px;
+    justify-content: space-around;
   }
+  .sidebar-header, .label, .menu-divider, .logout-item { display: none; }
+  .menu-links { flex-direction: row; justify-content: center; padding: 0; width: 100%; }
+  .menu-item { width: auto; padding-left: 0; }
 }

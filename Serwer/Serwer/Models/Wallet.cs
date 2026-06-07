@@ -6,9 +6,9 @@ namespace Investe.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public Guid UserId { get; set; }
-        public virtual User User { get; set; } = null!;
+        public User User { get; set; } = null!;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
-        public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<Asset> Assets { get; set; } = new List<Asset>();
+        public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     }
 }

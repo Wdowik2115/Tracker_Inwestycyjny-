@@ -1,16 +1,18 @@
+<app-crypto-background></app-crypto-background>
+
 <div class="auth-container">
   <div class="auth-card">
-    <div class="logo-section">
+    <div class="logo-section animate-fade-in">
       <div class="logo">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <svg width="50" height="50" viewBox="0 0 40 40" fill="none">
           <path d="M20 0L25 15L40 20L25 25L20 40L15 25L0 20L15 15L20 0Z" fill="#F5A623"/>
         </svg>
-        <h1>CryptoFlow</h1>
+        <h1 class="animate-text-glow">Investee</h1>
       </div>
-      <p>Safely Buy, Sell, and Hold Bitcoin, Ethereum, and other assets in one place.</p>
+      <p class="animate-slide-up">Safely Buy, Sell, and Hold Bitcoin, Ethereum, and other assets in one place.</p>
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="auth-form">
+    <form (ngSubmit)="onSubmit()" class="auth-form animate-fade-in-up">
       <h2>Login</h2>
 
       @if (error()) {
@@ -42,7 +44,12 @@
       </div>
 
       <button type="submit" class="btn-primary" [disabled]="loading()">
-        {{ loading() ? 'Logging in...' : 'Login' }}
+        @if (loading()) {
+          <span class="spinner"></span>
+          Logging in...
+        } @else {
+          Login
+        }
       </button>
 
       <p class="auth-link">
