@@ -6,5 +6,6 @@ namespace Investe.Application.DTOs
         public string Symbol { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
+        public int? Rank { get; set; }
     }
 }

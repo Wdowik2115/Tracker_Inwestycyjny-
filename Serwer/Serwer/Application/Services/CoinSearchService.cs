@@ -1,72 +1,63 @@
+using System.Text.Json;
 using Investe.Application.DTOs;
 using Investe.Application.Interfaces.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Investe.Application.Services
 {
     public class CoinSearchService : ICoinSearchService
     {
-        private static readonly Dictionary<string, (string name, string symbol, string coinId)> KnownCoins = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["BTC"] = ("Bitcoin", "BTC", "bitcoin"),
-            ["ETH"] = ("Ethereum", "ETH", "ethereum"),
-            ["SOL"] = ("Solana", "SOL", "solana"),
-            ["BNB"] = ("Binance Coin", "BNB", "binancecoin"),
-            ["USDT"] = ("Tether", "USDT", "tether"),
-            ["USDC"] = ("USD Coin", "USDC", "usd-coin"),
-            ["ADA"] = ("Cardano", "ADA", "cardano"),
-            ["DOT"] = ("Polkadot", "DOT", "polkadot"),
-            ["AVAX"] = ("Avalanche", "AVAX", "avalanche-2"),
-            ["MATIC"] = ("Polygon", "MATIC", "matic-network"),
-            ["LINK"] = ("Chainlink", "LINK", "chainlink"),
-            ["XRP"] = ("Ripple", "XRP", "ripple"),
-            ["LTC"] = ("Litecoin", "LTC", "litecoin"),
-            ["BCH"] = ("Bitcoin Cash", "BCH", "bitcoin-cash"),
-            ["XLM"] = ("Stellar", "XLM", "stellar"),
-            ["DOGE"] = ("Dogecoin", "DOGE", "dogecoin"),
-            ["UNI"] = ("Uniswap", "UNI", "uniswap"),
-            ["ATOM"] = ("Cosmos", "ATOM", "cosmos"),
-            ["ARB"] = ("Arbitrum", "ARB", "arbitrum"),
-            ["OP"] = ("Optimism", "OP", "optimism"),
-        };
-
-        private readonly ICoinPriceService _coinPriceService;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IMemoryCache _cache;
         private readonly ILogger<CoinSearchService> _logger;
+        private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromSeconds(60);
 
-        public CoinSearchService(ICoinPriceService coinPriceService, ILogger<CoinSearchService> logger)
+        public CoinSearchService(IHttpClientFactory httpClientFactory, IMemoryCache cache, ILogger<CoinSearchService> logger)
         {
-            _coinPriceService = coinPriceService;
+            _httpClientFactory = httpClientFactory;
+            _cache = cache;
             _logger = logger;
         }
 
         public async Task<List<CoinSearchDto>> SearchCoinsAsync(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
-                return new List<CoinSearchDto>();
+                return [];
 
-            var searchQuery = query.Trim().ToUpperInvariant();
-            var results = new List<CoinSearchDto>();
+            var cacheKey = $"search:{query.Trim().ToLowerInvariant()}";
+            if (_cache.TryGetValue(cacheKey, out List<CoinSearchDto> cached))
+                return cached;
 
-            foreach (var (symbol, (name, _, coinId)) in KnownCoins)
+            try
             {
-                if (symbol.StartsWith(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                    name.StartsWith(searchQuery, StringComparison.OrdinalIgnoreCase))
+                var client = _httpClientFactory.CreateClient("CoinGecko");
+                var response = await client.GetStringAsync($"search?query={Uri.EscapeDataString(query.Trim())}");
+
+                using var doc = JsonDocument.Parse(response);
+                var coins = doc.RootElement.GetProperty("coins");
+
+                var results = new List<CoinSearchDto>();
+                foreach (var coin in coins.EnumerateArray().Take(10))
                 {
-                    var imageUrl = await _coinPriceService.GetCoinImageUrlAsync(coinId);
                     results.Add(new CoinSearchDto
                     {
-                        CoinId = coinId,
-                        Symbol = symbol,
-                        Name = name,
-                        ImageUrl = imageUrl
+                        CoinId = coin.GetProperty("id").GetString() ?? string.Empty,
+                        Symbol = (coin.GetProperty("symbol").GetString() ?? string.Empty).ToUpperInvariant(),
+                        Name = coin.GetProperty("name").GetString() ?? string.Empty,
+                        ImageUrl = coin.TryGetProperty("large", out var large) ? large.GetString() : coin.TryGetProperty("thumb", out var thumb) ? thumb.GetString() : null,
+                        Rank = coin.TryGetProperty("market_cap_rank", out var rank) && rank.ValueKind == JsonValueKind.Number ? rank.GetInt32() : null,
                     });
-
-                    if (results.Count >= 10)
-                        break;
                 }
-            }
 
-            return results;
+                _cache.Set(cacheKey, results, SearchCacheTtl);
+                return results;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CoinGecko search failed for query {Query}", query);
+                return [];
+            }
         }
 
         public async Task<CoinDetailDto?> GetCoinDetailsAsync(string coinId)
@@ -74,24 +65,36 @@ namespace Investe.Application.Services
             if (string.IsNullOrWhiteSpace(coinId))
                 return null;
 
-            var coin = KnownCoins.Values.FirstOrDefault(c => 
-                c.coinId.Equals(coinId, StringComparison.OrdinalIgnoreCase));
+            var cacheKey = $"detail:{coinId.ToLowerInvariant()}";
+            if (_cache.TryGetValue(cacheKey, out CoinDetailDto cached))
+                return cached;
 
-            if (coin == default)
+            try
             {
-                _logger.LogWarning("Coin not found: {CoinId}", coinId);
+                var client = _httpClientFactory.CreateClient("CoinGecko");
+                var response = await client.GetStringAsync($"coins/{Uri.EscapeDataString(coinId.ToLowerInvariant())}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false");
+
+                using var doc = JsonDocument.Parse(response);
+                var root = doc.RootElement;
+
+                var result = new CoinDetailDto
+                {
+                    CoinId = root.GetProperty("id").GetString() ?? coinId,
+                    Symbol = (root.GetProperty("symbol").GetString() ?? string.Empty).ToUpperInvariant(),
+                    Name = root.GetProperty("name").GetString() ?? string.Empty,
+                    ImageUrl = root.TryGetProperty("image", out var img)
+                        ? img.TryGetProperty("large", out var large) ? large.GetString() ?? string.Empty : string.Empty
+                        : string.Empty,
+                };
+
+                _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fetch coin details for {CoinId}", coinId);
                 return null;
             }
-
-            var imageUrl = await _coinPriceService.GetCoinImageUrlAsync(coinId);
-
-            return new CoinDetailDto
-            {
-                CoinId = coinId,
-                Symbol = coin.symbol,
-                Name = coin.name,
-                ImageUrl = imageUrl
-            };
         }
     }
 }

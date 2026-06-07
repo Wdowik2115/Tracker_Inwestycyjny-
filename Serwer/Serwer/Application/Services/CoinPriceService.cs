@@ -100,5 +100,10 @@ namespace Investe.Application.Services
                 return string.Empty;
             }
         }
+
+        public Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
