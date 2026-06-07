@@ -13,8 +13,16 @@ namespace Investe.Infrastructure.Persistence.Repositories.Implementations
         public async Task<IEnumerable<Wallet>> GetWalletsByUserIdAsync(Guid userId)
         {
             return await _dbContext.Wallets
-                .Where(w => w.UserId == userId)
+                .Include(w => w.SharedWith)
+                .Where(w => w.UserId == userId || w.SharedWith.Any(u => u.Id == userId))
                 .ToListAsync();
+        }
+
+        public async Task<Wallet?> GetWalletWithMembersAsync(Guid walletId)
+        {
+            return await _dbContext.Wallets
+                .Include(w => w.SharedWith)
+                .FirstOrDefaultAsync(w => w.Id == walletId);
         }
     }
 }

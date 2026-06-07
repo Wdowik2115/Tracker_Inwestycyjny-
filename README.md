@@ -12,15 +12,16 @@ Investe to aplikacja webowa umożliwiająca użytkownikom śledzenie portfeli kr
 |---|---|
 | Frontend | Angular 17 (SPA) |
 | Backend | ASP.NET Core Web API (.NET 8) |
-| Baza danych | Microsoft SQL Server |
+| Baza danych | SQLite (Development) / SQL Server |
 | Uwierzytelnianie | ASP.NET Identity + JWT |
 | Dane krypto | CoinGecko API (plan bezpłatny) |
 
 ---
 
-## Funkcjonalności
+## Funkcionalności
 
 - **Przegląd portfela** — bieżąca łączna wartość portfela we wszystkich portfelach
+- **Współdzielenie portfeli** — możliwość udostępniania portfela innym użytkownikom do wspólnego śledzenia i zarządzania transakcjami
 - **Ceny kryptowalut na żywo** — dane pobierane z CoinGecko API i automatycznie odświeżane
 - **Wiele portfeli / kont** — organizowanie aktywów w oddzielnych portfelach dla każdego użytkownika
 - **Historia transakcji kupna / sprzedaży** — rejestrowanie i przeglądanie wszystkich transakcji z datą i ceną
@@ -28,6 +29,25 @@ Investe to aplikacja webowa umożliwiająca użytkownikom śledzenie portfeli kr
 - **Wykresy i analityka** — wizualizacja alokacji, wyników w czasie i P&L
 - **Alerty i powiadomienia** — ustawianie progów cenowych i otrzymywanie powiadomień w aplikacji
 - **Uwierzytelnianie użytkowników** — bezpieczna rejestracja i logowanie za pomocą ASP.NET Identity z tokenami JWT
+
+---
+
+## Jak uruchomić projekt
+
+### Wymagania
+- .NET 8 SDK
+- Node.js & npm
+
+### Backend
+1. Przejdź do folderu `Serwer/Serwer`.
+2. Przywróć narzędzia: `dotnet tool restore`.
+3. Uruchom serwer: `dotnet run`. (Baza SQLite zostanie automatycznie zainicjalizowana i zaktualizowana).
+
+### Frontend
+1. Przejdź do folderu `Client`.
+2. Zainstaluj zależności: `npm install`.
+3. Uruchom aplikację: `npm start`.
+4. Otwórz `http://localhost:4200`.
 
 ---
 

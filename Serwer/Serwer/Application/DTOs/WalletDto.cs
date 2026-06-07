@@ -7,5 +7,7 @@ namespace Investe.Application.DTOs
         public string Description { get; set; } = string.Empty;
         public decimal TotalValue { get; set; }
         public int AssetCount { get; set; }
+        public Guid OwnerId { get; set; }
+        public List<string> SharedWithEmails { get; set; } = new();
     }
 }

@@ -18,5 +18,11 @@ namespace Investe.Application.Interfaces.Services
 
         /// <summary>Deletes a wallet owned by the user. Throws KeyNotFoundException or UnauthorizedAccessException.</summary>
         Task DeleteWalletAsync(Guid userId, Guid walletId);
+
+        /// <summary>Shares a wallet with another user by email.</summary>
+        Task ShareWalletAsync(Guid ownerId, Guid walletId, string shareWithEmail);
+
+        /// <summary>Removes a user from wallet sharing.</summary>
+        Task UnshareWalletAsync(Guid ownerId, Guid walletId, string unshareWithEmail);
     }
 }

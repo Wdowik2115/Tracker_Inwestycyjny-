@@ -7,6 +7,9 @@
         </svg>
       </a>
       <h1 class="page-title">{{ wallet()?.name }}</h1>
+      @if (!isOwner()) {
+        <span class="badge badge-info">Shared</span>
+      }
     </div>
     <div class="header-actions">
       <button class="btn-primary" [routerLink]="['/transactions']" [queryParams]="{ walletId: wallet()?.id, add: true }">Add Transaction</button>

@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { WalletService } from '../../../services/wallet.service';
+import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import { WalletDetailsDto } from '../../../models';
@@ -18,6 +19,7 @@ import { WalletDetailsDto } from '../../../models';
 export class WalletDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private walletService = inject(WalletService);
+  private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private titleService = inject(Title);
 
@@ -33,6 +35,11 @@ export class WalletDetailComponent implements OnInit, OnDestroy {
         this.load(id);
       }
     });
+  }
+
+  isOwner(): boolean {
+    const w = this.wallet();
+    return w?.ownerId === this.authService.currentUser()?.userId;
   }
 
   ngOnDestroy(): void {

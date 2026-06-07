@@ -25,8 +25,9 @@ namespace Serwer.Tests.Application.Services
             var priceServiceMock = new Mock<ICoinPriceService>();
             var loggerMock = new Mock<ILogger<TransactionService>>();
 
-            var wallet = new Wallet { Id = walletId, UserId = userId };
+            var wallet = new Wallet { Id = walletId, UserId = userId, SharedWith = new List<User>() };
             walletRepoMock.Setup(r => r.GetByIdAsync(walletId)).ReturnsAsync(wallet);
+            walletRepoMock.Setup(r => r.GetWalletWithMembersAsync(walletId)).ReturnsAsync(wallet);
 
             priceServiceMock
                 .Setup(p => p.GetHistoricalPriceAsync(It.IsAny<string>(), It.IsAny<DateTime>()))

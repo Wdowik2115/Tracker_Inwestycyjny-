@@ -5,7 +5,21 @@
 .header-with-back {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-info {
+  background: rgba(30, 144, 255, 0.1);
+  color: #1e90ff;
+  border: 1px solid rgba(30, 144, 255, 0.2);
 }
 
 .btn-back {

@@ -31,4 +31,12 @@ export class WalletService {
   deleteWallet(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  shareWallet(id: string, email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/share`, { email });
+  }
+
+  unshareWallet(id: string, email: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/share/${email}`);
+  }
 }

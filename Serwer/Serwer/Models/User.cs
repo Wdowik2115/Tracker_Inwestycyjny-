@@ -7,6 +7,7 @@ namespace Investe.Domain.Entities
         public string PasswordHash { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+        public virtual ICollection<Wallet> SharedWallets { get; set; } = new List<Wallet>();
         public virtual ICollection<PriceAlert> PriceAlerts { get; set; } = new List<PriceAlert>();
     }
 }

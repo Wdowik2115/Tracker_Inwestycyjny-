@@ -22,6 +22,8 @@ export interface WalletDto {
   description: string;
   totalValue: number;
   assetCount: number;
+  ownerId: string;
+  sharedWithEmails: string[];
 }
 
 export interface WalletDetailsDto extends WalletDto {
@@ -36,6 +38,10 @@ export interface CreateWalletDto {
 export interface UpdateWalletDto {
   name: string;
   description?: string;
+}
+
+export interface ShareWalletDto {
+  email: string;
 }
 
 // Transaction models

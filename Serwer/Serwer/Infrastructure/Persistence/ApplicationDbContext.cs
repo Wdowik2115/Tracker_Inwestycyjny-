@@ -36,6 +36,9 @@ namespace Investe.Infrastructure.Persistence
                     .WithMany(u => u.Wallets)
                     .HasForeignKey(w => w.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+                e.HasMany(w => w.SharedWith)
+                    .WithMany(u => u.SharedWallets)
+                    .UsingEntity(j => j.ToTable("WalletShares"));
                 e.HasMany(w => w.Assets)
                     .WithOne(a => a.Wallet)
                     .HasForeignKey(a => a.WalletId)

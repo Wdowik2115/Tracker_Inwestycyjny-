@@ -11,7 +11,9 @@ namespace Investe.Application.Mappings
             {
                 Id = wallet.Id,
                 Name = wallet.Name,
-                Description = wallet.Description
+                Description = wallet.Description,
+                OwnerId = wallet.UserId,
+                SharedWithEmails = wallet.SharedWith?.Select(u => u.Email).ToList() ?? new List<string>()
             };
         }
 

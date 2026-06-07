@@ -131,14 +131,7 @@ namespace Serwer
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                if (app.Environment.IsDevelopment())
-                {
-                    db.Database.EnsureCreated();
-                }
-                else
-                {
-                    db.Database.Migrate();
-                }
+                db.Database.Migrate();
             }
 
             app.Run();

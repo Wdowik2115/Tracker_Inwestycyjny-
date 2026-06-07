@@ -52,5 +52,19 @@ namespace Serwer.Controllers
             await _walletService.DeleteWalletAsync(User.GetUserId(), id);
             return NoContent();
         }
+
+        [HttpPost("{id:guid}/share")]
+        public async Task<IActionResult> ShareWallet(Guid id, [FromBody] ShareWalletDto dto)
+        {
+            await _walletService.ShareWalletAsync(User.GetUserId(), id, dto.Email);
+            return Ok();
+        }
+
+        [HttpDelete("{id:guid}/share/{email}")]
+        public async Task<IActionResult> UnshareWallet(Guid id, string email)
+        {
+            await _walletService.UnshareWalletAsync(User.GetUserId(), id, email);
+            return Ok();
+        }
     }
 }
