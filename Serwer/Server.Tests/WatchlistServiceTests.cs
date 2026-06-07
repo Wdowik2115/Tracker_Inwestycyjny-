@@ -57,6 +57,23 @@ namespace Serwer.Tests.Application.Services
         }
 
         [Fact]
+        public async Task GetWatchlistItemByIdAsync_ReturnsMappedItem()
+        {
+            var userId = Guid.NewGuid();
+            var itemId = Guid.NewGuid();
+            var (uow, watchlistRepo, priceService, svc) = BuildSut();
+
+            var item = new WatchlistItem { Id = itemId, UserId = userId, Symbol = "BTC" };
+            watchlistRepo.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+            priceService.Setup(p => p.GetCurrentPriceAsync("BTC")).ReturnsAsync(60000m);
+
+            var result = await svc.GetWatchlistItemByIdAsync(userId, itemId);
+
+            Assert.Equal(itemId, result.Id);
+            Assert.Equal(60000m, result.CurrentPrice);
+        }
+
+        [Fact]
         public async Task AddToWatchlistAsync_AddsNewItemWhenNotExists()
         {
             var userId = Guid.NewGuid();
@@ -67,12 +84,13 @@ namespace Serwer.Tests.Application.Services
             watchlistRepo.Setup(r => r.GetByUserAndCoinAsync(userId, "solana")).ReturnsAsync((WatchlistItem?)null);
             priceService.Setup(p => p.GetCurrentPriceAsync("SOL")).ReturnsAsync(150m);
 
-            var result = await svc.AddToWatchlistAsync(userId, dto);
+            var (item, isCreated) = await svc.AddToWatchlistAsync(userId, dto);
 
             watchlistRepo.Verify(r => r.AddAsync(It.Is<WatchlistItem>(i => i.CoinId == "solana" && i.UserId == userId)), Times.Once);
             uow.Verify(u => u.CompleteAsync(), Times.Once);
-            Assert.Equal("SOL", result.Symbol);
-            Assert.Equal(150m, result.CurrentPrice);
+            Assert.True(isCreated);
+            Assert.Equal("SOL", item.Symbol);
+            Assert.Equal(150m, item.CurrentPrice);
         }
 
         [Fact]
@@ -87,10 +105,11 @@ namespace Serwer.Tests.Application.Services
             watchlistRepo.Setup(r => r.GetByUserAndCoinAsync(userId, "bitcoin")).ReturnsAsync(existing);
             priceService.Setup(p => p.GetCurrentPriceAsync("BTC")).ReturnsAsync(60000m);
 
-            var result = await svc.AddToWatchlistAsync(userId, dto);
+            var (item, isCreated) = await svc.AddToWatchlistAsync(userId, dto);
 
             watchlistRepo.Verify(r => r.AddAsync(It.IsAny<WatchlistItem>()), Times.Never);
-            Assert.Equal(existing.Id, result.Id);
+            Assert.False(isCreated);
+            Assert.Equal(existing.Id, item.Id);
         }
 
         [Fact]
@@ -110,7 +129,7 @@ namespace Serwer.Tests.Application.Services
         }
 
         [Fact]
-        public async Task RemoveFromWatchlistAsync_DoesNothingWhenNotOwnedByUser()
+        public async Task RemoveFromWatchlistAsync_ThrowsUnauthorizedAccessException_WhenNotOwnedByUser()
         {
             var userId = Guid.NewGuid();
             var otherUserId = Guid.NewGuid();
@@ -120,9 +139,21 @@ namespace Serwer.Tests.Application.Services
             var item = new WatchlistItem { Id = itemId, UserId = otherUserId };
             watchlistRepo.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
 
-            await svc.RemoveFromWatchlistAsync(userId, itemId);
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => svc.RemoveFromWatchlistAsync(userId, itemId));
 
             watchlistRepo.Verify(r => r.DeleteAsync(It.IsAny<WatchlistItem>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task RemoveFromWatchlistAsync_ThrowsKeyNotFoundException_WhenItemDoesNotExist()
+        {
+            var userId = Guid.NewGuid();
+            var itemId = Guid.NewGuid();
+            var (uow, watchlistRepo, _, svc) = BuildSut();
+
+            watchlistRepo.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync((WatchlistItem?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => svc.RemoveFromWatchlistAsync(userId, itemId));
         }
 
         [Fact]

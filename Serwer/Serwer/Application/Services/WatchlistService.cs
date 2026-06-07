@@ -32,11 +32,23 @@ namespace Investe.Application.Services
             });
         }
 
-        public async Task<WatchlistItemDto> AddToWatchlistAsync(Guid userId, AddToWatchlistDto dto)
+        public async Task<WatchlistItemDto> GetWatchlistItemByIdAsync(Guid userId, Guid id)
+        {
+            var item = await _unitOfWork.Watchlist.GetByIdAsync(id)
+                ?? throw new KeyNotFoundException($"Watchlist item {id} not found.");
+
+            if (item.UserId != userId)
+                throw new UnauthorizedAccessException("Watchlist item does not belong to this user.");
+
+            var price = await _priceService.GetCurrentPriceAsync(item.Symbol);
+            return MapToDto(item, price);
+        }
+
+        public async Task<(WatchlistItemDto Item, bool IsCreated)> AddToWatchlistAsync(Guid userId, AddToWatchlistDto dto)
         {
             var existing = await _unitOfWork.Watchlist.GetByUserAndCoinAsync(userId, dto.CoinId);
             if (existing != null)
-                return MapToDto(existing, await _priceService.GetCurrentPriceAsync(dto.Symbol));
+                return (MapToDto(existing, await _priceService.GetCurrentPriceAsync(dto.Symbol)), false);
 
             var item = new WatchlistItem
             {
@@ -48,17 +60,19 @@ namespace Investe.Application.Services
             await _unitOfWork.Watchlist.AddAsync(item);
             await _unitOfWork.CompleteAsync();
 
-            return MapToDto(item, await _priceService.GetCurrentPriceAsync(dto.Symbol));
+            return (MapToDto(item, await _priceService.GetCurrentPriceAsync(dto.Symbol)), true);
         }
 
         public async Task RemoveFromWatchlistAsync(Guid userId, Guid id)
         {
-            var item = await _unitOfWork.Watchlist.GetByIdAsync(id);
-            if (item != null && item.UserId == userId)
-            {
-                await _unitOfWork.Watchlist.DeleteAsync(item);
-                await _unitOfWork.CompleteAsync();
-            }
+            var item = await _unitOfWork.Watchlist.GetByIdAsync(id)
+                ?? throw new KeyNotFoundException($"Watchlist item {id} not found.");
+
+            if (item.UserId != userId)
+                throw new UnauthorizedAccessException("Watchlist item does not belong to this user.");
+
+            await _unitOfWork.Watchlist.DeleteAsync(item);
+            await _unitOfWork.CompleteAsync();
         }
 
         public async Task<bool> IsOnWatchlistAsync(Guid userId, string coinId)

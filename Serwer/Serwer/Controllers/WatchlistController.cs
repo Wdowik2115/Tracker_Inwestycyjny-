@@ -27,10 +27,21 @@ namespace Serwer.Controllers
             return Ok(watchlist);
         }
 
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetWatchlistItem(Guid id)
+        {
+            var item = await _watchlistService.GetWatchlistItemByIdAsync(UserId, id);
+            return Ok(item);
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddToWatchlist([FromBody] AddToWatchlistDto dto)
         {
-            var item = await _watchlistService.AddToWatchlistAsync(UserId, dto);
+            var (item, isCreated) = await _watchlistService.AddToWatchlistAsync(UserId, dto);
+            
+            if (isCreated)
+                return CreatedAtAction(nameof(GetWatchlistItem), new { id = item.Id }, item);
+
             return Ok(item);
         }
 

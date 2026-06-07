@@ -4,13 +4,10 @@
 */
 
 .page {
-  max-width: 1200px;
+  width: 100%;
 }
 
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 24px;
 }
 
@@ -160,26 +157,6 @@
 
 .price-cell {
   font-weight: 500;
-}
-
-/* Action Button - Orange with Black text */
-.btn-primary {
-  padding: 9px 20px;
-  background: var(--accent); /* Orange */
-  color: #000; /* Black text */
-  font-weight: 600;
-  font-size: 13px;
-  border-radius: 8px;
-  transition: background 0.15s;
-}
-
-.btn-primary:hover:not([disabled]) {
-  background: var(--accent-hover);
-}
-
-.btn-primary[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* Row action buttons (Delete) */
