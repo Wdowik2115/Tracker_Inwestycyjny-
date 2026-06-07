@@ -17,5 +17,6 @@ namespace Investe.Application.DTOs
         public string? CostBasisSource { get; set; }
         public DateOnly ExecutedAt { get; set; }
         public string Notes { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
     }
 }

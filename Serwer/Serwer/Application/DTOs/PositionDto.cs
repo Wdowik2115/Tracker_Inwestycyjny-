@@ -4,6 +4,7 @@ namespace Investe.Application.DTOs
     {
         public string Symbol { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
         public decimal Quantity { get; set; }
         public decimal AvgCostBasis { get; set; }
         public decimal CurrentPrice { get; set; }

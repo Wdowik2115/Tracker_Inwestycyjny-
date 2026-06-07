@@ -381,6 +381,14 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
+.asset-icon-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .asset-info {
   display: flex;
   flex-direction: column;
