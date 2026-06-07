@@ -8,6 +8,7 @@ using Investe.Domain.Entities;
 using Investe.Infrastructure.Persistence.Repositories;
 using Investe.Infrastructure.Persistence.UnitOfWork;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -21,6 +22,8 @@ namespace Serwer.Tests.Application.Services
         private readonly Mock<IPortfolioService> _portfolioServiceMock;
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
         private readonly Mock<IConfiguration> _configurationMock;
+        private readonly Mock<ILogger<ChatService>> _loggerMock;
+        private readonly Mock<ICoinPriceService> _coinPriceServiceMock;
         private readonly ChatService _sut;
 
         public ChatServiceTests()
@@ -30,6 +33,8 @@ namespace Serwer.Tests.Application.Services
             _portfolioServiceMock = new Mock<IPortfolioService>();
             _httpClientFactoryMock = new Mock<IHttpClientFactory>();
             _configurationMock = new Mock<IConfiguration>();
+            _loggerMock = new Mock<ILogger<ChatService>>();
+            _coinPriceServiceMock = new Mock<ICoinPriceService>();
 
             _uowMock.Setup(u => u.ChatMessages).Returns(_chatRepoMock.Object);
 
@@ -37,7 +42,9 @@ namespace Serwer.Tests.Application.Services
                 _uowMock.Object,
                 _portfolioServiceMock.Object,
                 _httpClientFactoryMock.Object,
-                _configurationMock.Object);
+                _configurationMock.Object,
+                _loggerMock.Object,
+                _coinPriceServiceMock.Object);
         }
 
         [Fact]
