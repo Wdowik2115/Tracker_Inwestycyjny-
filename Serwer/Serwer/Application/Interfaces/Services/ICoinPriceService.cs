@@ -19,6 +19,9 @@ namespace Investe.Application.Interfaces.Services
         /// <summary>Returns a list of all coins supported by the service (symbol and name/id).</summary>
         Task<Dictionary<string, string>> GetSupportedCoinsAsync();
 
+        /// <summary>Returns the top N coins by price change percentage in the last 24h.</summary>
+        Task<IEnumerable<CoinMarketDataDto>> GetTopMoversAsync(int count = 10, bool ascending = false);
+
         /// <summary>Returns the image URL for a coin from CoinGecko. Returns empty string on failure.</summary>
         Task<string> GetCoinImageUrlAsync(string coinId);
     }

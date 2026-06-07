@@ -10,6 +10,11 @@ namespace Investe.Infrastructure.Persistence.Repositories.Implementations
         {
         }
 
+        public async Task<IEnumerable<PriceAlert>> GetByUserIdAsync(Guid userId)
+        {
+            return await GetAlertsByUserIdAsync(userId);
+        }
+
         public async Task<IEnumerable<PriceAlert>> GetAlertsByUserIdAsync(Guid userId)
         {
             return await _dbContext.PriceAlerts

@@ -144,6 +144,20 @@
 }
 .send-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
 
+.slow-response-info {
+  font-size: 0.75rem;
+  color: #6366f1;
+  margin-bottom: 8px;
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
 /* Typing */
 .typing-indicator span {
   height: 6px; width: 6px; background: #fff; border-radius: 50%; display: inline-block; opacity: 0.4;
