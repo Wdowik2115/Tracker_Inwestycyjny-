@@ -4,11 +4,19 @@ import { Observable } from 'rxjs';
 import { TransactionDto, TransactionCreateDto, TransactionUpdateDto } from '../models';
 import { environment } from '../../environments/environment';
 
+export interface CoinSearchDto {
+  coinId: string;
+  symbol: string;
+  name: string;
+  imageUrl?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class TransactionService {
   private apiUrl = `${environment.apiUrl}/transactions`;
+  private coinsApiUrl = `${environment.apiUrl}/coins`;
 
   constructor(private http: HttpClient) {}
 
@@ -26,5 +34,11 @@ export class TransactionService {
 
   deleteTransaction(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  searchCoins(query: string): Observable<CoinSearchDto[]> {
+    return this.http.get<CoinSearchDto[]>(`${this.coinsApiUrl}/search`, {
+      params: { query }
+    });
   }
 }

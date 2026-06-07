@@ -58,6 +58,7 @@ namespace Serwer
 
             // ── Application Services ──────────────────────────────────────────
             builder.Services.AddScoped<ICoinPriceService, CoinPriceService>();
+            builder.Services.AddScoped<ICoinSearchService, CoinSearchService>();
             builder.Services.AddScoped<IWalletService, WalletService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
             builder.Services.AddScoped<IPortfolioService, PortfolioService>();

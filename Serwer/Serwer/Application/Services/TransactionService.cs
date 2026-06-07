@@ -47,7 +47,8 @@ namespace Investe.Application.Services
                         Symbol = dto.Symbol,
                         Name = dto.Symbol,
                         Quantity = dto.Quantity,
-                        AverageBuyPrice = dto.PriceAtTime
+                        AverageBuyPrice = dto.PriceAtTime,
+                        ImageUrl = dto.ImageUrl
                     };
                     await _unitOfWork.Assets.AddAsync(asset);
                 }

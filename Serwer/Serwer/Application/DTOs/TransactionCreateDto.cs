@@ -34,5 +34,8 @@ namespace Investe.Application.DTOs
 
         [StringLength(1000)]
         public string Notes { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? ImageUrl { get; set; }
     }
 }

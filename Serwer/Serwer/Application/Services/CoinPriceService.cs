@@ -70,35 +70,34 @@ namespace Investe.Application.Services
             }
         }
 
-        /// <summary>Returns the historical USD price for a coin symbol on the given UTC date. Returns 0 on failure.</summary>
-        public async Task<decimal> GetHistoricalPriceAsync(string symbol, DateTime date)
+        /// <summary>Returns the image URL for a coin from CoinGecko. Returns empty string on failure.</summary>
+        public async Task<string> GetCoinImageUrlAsync(string coinId)
         {
-            if (!SymbolToId.TryGetValue(symbol, out var coinId))
-            {
-                _logger.LogWarning("Unknown symbol {Symbol} — no CoinGecko mapping", symbol);
-                return 0m;
-            }
+            if (string.IsNullOrWhiteSpace(coinId))
+                return string.Empty;
+
+            var cacheKey = $"image:{coinId.ToLowerInvariant()}";
+            if (_cache.TryGetValue(cacheKey, out string cached))
+                return cached;
 
             try
             {
-                var dateStr = date.ToUniversalTime().ToString("dd-MM-yyyy");
                 var client = _httpClientFactory.CreateClient("CoinGecko");
-                var response = await client.GetStringAsync(
-                    $"coins/{coinId}/history?date={dateStr}");
+                var response = await client.GetStringAsync($"coins/{coinId.ToLowerInvariant()}");
 
                 using var doc = JsonDocument.Parse(response);
-                var price = doc.RootElement
-                    .GetProperty("market_data")
-                    .GetProperty("current_price")
-                    .GetProperty("usd")
-                    .GetDecimal();
+                var imageUrl = doc.RootElement
+                    .GetProperty("image")
+                    .GetProperty("large")
+                    .GetString() ?? string.Empty;
 
-                return price;
+                _cache.Set(cacheKey, imageUrl, CacheTtl);
+                return imageUrl;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to fetch historical price for {Symbol} on {Date}", symbol, date);
-                return 0m;
+                _logger.LogError(ex, "Failed to fetch image for {CoinId}", coinId);
+                return string.Empty;
             }
         }
     }
