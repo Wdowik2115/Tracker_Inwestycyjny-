@@ -40,7 +40,7 @@ namespace Serwer
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(connectionString));
+                options.UseSqlServer(connectionString));
 
             // ── Memory cache + HTTP clients ───────────────────────────────────
             builder.Services.AddMemoryCache();
