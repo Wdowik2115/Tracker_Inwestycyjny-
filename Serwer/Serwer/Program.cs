@@ -52,7 +52,8 @@ namespace Serwer
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+                options.UseSqlServer(connectionString, sql =>
+                    sql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null)));
 
             // ── Memory cache + HTTP clients ───────────────────────────────────
             builder.Services.AddMemoryCache();
@@ -165,7 +166,20 @@ namespace Serwer
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                db.Database.Migrate();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                for (int i = 1; i <= 5; i++)
+                {
+                    try
+                    {
+                        db.Database.Migrate();
+                        break;
+                    }
+                    catch (Exception ex) when (i < 5)
+                    {
+                        logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying in 10s...", i);
+                        Thread.Sleep(TimeSpan.FromSeconds(10));
+                    }
+                }
             }
 
             app.Run();

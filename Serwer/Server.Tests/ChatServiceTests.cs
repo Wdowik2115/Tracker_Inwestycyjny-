@@ -20,7 +20,7 @@ namespace Serwer.Tests.Application.Services
         private readonly Mock<IUnitOfWork> _uowMock;
         private readonly Mock<IChatMessageRepository> _chatRepoMock;
         private readonly Mock<IPortfolioService> _portfolioServiceMock;
-        private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
+        private readonly Mock<IGeminiApiService> _geminiApiServiceMock;
         private readonly Mock<IConfiguration> _configurationMock;
         private readonly Mock<ILogger<ChatService>> _loggerMock;
         private readonly Mock<ICoinPriceService> _coinPriceServiceMock;
@@ -31,7 +31,7 @@ namespace Serwer.Tests.Application.Services
             _uowMock = new Mock<IUnitOfWork>();
             _chatRepoMock = new Mock<IChatMessageRepository>();
             _portfolioServiceMock = new Mock<IPortfolioService>();
-            _httpClientFactoryMock = new Mock<IHttpClientFactory>();
+            _geminiApiServiceMock = new Mock<IGeminiApiService>();
             _configurationMock = new Mock<IConfiguration>();
             _loggerMock = new Mock<ILogger<ChatService>>();
             _coinPriceServiceMock = new Mock<ICoinPriceService>();
@@ -41,7 +41,7 @@ namespace Serwer.Tests.Application.Services
             _sut = new ChatService(
                 _uowMock.Object,
                 _portfolioServiceMock.Object,
-                _httpClientFactoryMock.Object,
+                _geminiApiServiceMock.Object,
                 _configurationMock.Object,
                 _loggerMock.Object,
                 _coinPriceServiceMock.Object);
@@ -68,41 +68,9 @@ namespace Serwer.Tests.Application.Services
             _chatRepoMock.Setup(r => r.GetByUserIdAsync(userId, It.IsAny<int>()))
                 .ReturnsAsync(new List<ChatMessage>());
 
-            _configurationMock.Setup(c => c["Gemini:ApiKey"]).Returns("test-key");
-
-            var handlerMock = new Mock<HttpMessageHandler>();
-            var response = new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(new
-                {
-                    candidates = new[]
-                    {
-                        new
-                        {
-                            content = new
-                            {
-                                parts = new[] { new { text = botResponse } }
-                            }
-                        }
-                    }
-                })
-            };
-
-            handlerMock
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(response);
-
-            var httpClient = new HttpClient(handlerMock.Object)
-            {
-                BaseAddress = new Uri("https://api.gemini.com/")
-            };
-
-            _httpClientFactoryMock.Setup(f => f.CreateClient("Gemini")).Returns(httpClient);
+            _geminiApiServiceMock
+                .Setup(g => g.GenerateContentAsync(It.IsAny<string>(), It.IsAny<List<object>>()))
+                .ReturnsAsync(botResponse);
 
             // Act
             var result = await _sut.AskQuestionAsync(userId, question);

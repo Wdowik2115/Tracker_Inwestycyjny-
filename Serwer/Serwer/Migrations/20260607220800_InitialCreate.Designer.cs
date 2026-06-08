@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Serwer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260607195615_AddWatchlistImageUrl")]
-    partial class AddWatchlistImageUrl
+    [Migration("20260607220800_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -326,6 +326,21 @@ namespace Serwer.Migrations
                     b.ToTable("Watchlist");
                 });
 
+            modelBuilder.Entity("UserWallet", b =>
+                {
+                    b.Property<Guid>("SharedWalletsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SharedWithId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("SharedWalletsId", "SharedWithId");
+
+                    b.HasIndex("SharedWithId");
+
+                    b.ToTable("WalletShares", (string)null);
+                });
+
             modelBuilder.Entity("Investe.Domain.Entities.Asset", b =>
                 {
                     b.HasOne("Investe.Domain.Entities.Wallet", "Wallet")
@@ -408,6 +423,21 @@ namespace Serwer.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UserWallet", b =>
+                {
+                    b.HasOne("Investe.Domain.Entities.Wallet", null)
+                        .WithMany()
+                        .HasForeignKey("SharedWalletsId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Investe.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("SharedWithId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Investe.Domain.Entities.User", b =>
